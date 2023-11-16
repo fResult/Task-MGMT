@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  taskmgmt-db:
+    container_name: taskmgmt-db
+    image: postgres
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+#      POSTGRES_USER: $POSTGRES_USER
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: task-mgmt
+    ports:
+      - "5432:5432"
+    volumes:
+      - taskmgmt-dev:/var/lib/postgresql/data
+
+#  taskmgmt-app:
+#    depends_on:
+#     - taskmgmt-db
+#    build: ../task-mgmt
+#    restart: on-failure
+#    env_file: /.env
+#    ports:
+#      - ${SPRING_LOCAL_PORT}:${SPRING_LOCAL_PORT}
+#    environment:
+#      SPRING_APPLICATION_JSON: '{
+#        "spring.datasource.url": "jdbc:postgresql://postgresdb:$POSTGRES_DOCKER_PORT/$POSTGRES_DATABASE",
+#        "spring.datasource.username": "$POSTGRES_USER",
+#        "spring.datasource.password": "$POSTGRES_ROOT_PASSWORD",
+#        "spring.jpa.properties.hibernate.dialect" : "org.hibernate.dialect.PostgreSQLDialect",
+#        "spring.jpa.hibernate.ddl-auto" : "update"
+#      }'
+
+
+volumes:
+  taskmgmt-dev:

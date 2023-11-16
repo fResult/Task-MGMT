@@ -1,0 +1,17 @@
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/task-mgmt
+    username: postgres
+    password: 123456
+#    schema: update
+
+  sql:
+    init:
+      schema-locations: classpath:schemas.sql
+      mode: always
+#  datasource:
+#    url: jdbc:postgresql://taskmgmt-db:5432
+#    name: task-mgmt
+#    username: postgres
+#    password: 123456
+#    driver-class-name: org.postgresql.Driver

@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS tasks (
+   id SERIAL PRIMARY KEY,
+   title VARCHAR(75) NOT NULL,
+   description VARCHAR(255),
+   due_date DATE NOT NULL,
+   status VARCHAR(20) NOT NULL,
+   created_by INT NOT NULL,
+   last_updated_by INT NOT NULL,
+   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+   last_updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
