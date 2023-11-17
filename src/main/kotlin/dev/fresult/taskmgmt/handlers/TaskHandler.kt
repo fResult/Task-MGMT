@@ -1,5 +1,6 @@
 package dev.fresult.taskmgmt.handlers
 
+import dev.fresult.taskmgmt.entities.Task
 import dev.fresult.taskmgmt.entities.TaskRequest
 import dev.fresult.taskmgmt.services.TaskService
 import kotlinx.coroutines.reactive.asFlow
@@ -16,7 +17,7 @@ class TaskHandler(private val service: TaskService) {
 
   suspend fun byId(request: ServerRequest): ServerResponse {
     return try {
-      val id = request.pathVariable("id").toLong()
+      val id = getPathId(request)
 
       ServerResponse.ok().bodyValueAndAwait(service.byId(id).awaitSingle())
     } catch (ex: NoSuchElementException) {
@@ -25,10 +26,40 @@ class TaskHandler(private val service: TaskService) {
   }
 
   suspend fun create(request: ServerRequest): ServerResponse {
-    return request.bodyToMono(TaskRequest::class.java)
+    return request.bodyToMono(Task::class.java)
       .flatMap {
         ServerResponse.status(HttpStatus.CREATED).body(service.create(it))
-          .switchIfEmpty(ServerResponse.notFound().build())
+//          .switchIfEmpty(ServerResponse.notFound().build())
       }.awaitSingle()
+  }
+
+  suspend fun update(request: ServerRequest): ServerResponse {
+    val id = getPathId(request)
+
+    return try {
+      service.byId(id).awaitSingle()
+      request.bodyToMono<Task>().flatMap {
+        ServerResponse.ok().body(service.update(id, it))
+      }.awaitSingle()
+    } catch (ex: NoSuchElementException) {
+      ex.message?.let { error("ERROR: $it") }
+      ServerResponse.notFound().buildAndAwait()
+    }
+  }
+
+  suspend fun deleteById(request: ServerRequest): ServerResponse {
+    val id = getPathId(request)
+
+    return try {
+      service.deleteById(id).awaitSingle()
+      ServerResponse.noContent().buildAndAwait()
+    } catch (ex: NoSuchElementException) {
+      println("ERROR: $ex")
+      ServerResponse.noContent().buildAndAwait()
+    }
+  }
+
+  private fun getPathId(request: ServerRequest): Long {
+    return request.pathVariable("id").toLong()
   }
 }
