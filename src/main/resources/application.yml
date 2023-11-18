@@ -8,7 +8,7 @@ spring:
   sql:
     init:
       schema-locations: classpath:schemas.sql
-      mode: always
+      mode: ALWAYS
 #  datasource:
 #    url: jdbc:postgresql://taskmgmt-db:5432
 #    name: task-mgmt

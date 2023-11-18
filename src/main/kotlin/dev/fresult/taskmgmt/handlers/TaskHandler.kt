@@ -1,7 +1,6 @@
 package dev.fresult.taskmgmt.handlers
 
 import dev.fresult.taskmgmt.entities.Task
-import dev.fresult.taskmgmt.entities.TaskRequest
 import dev.fresult.taskmgmt.services.TaskService
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactor.awaitSingle
@@ -37,9 +36,10 @@ class TaskHandler(private val service: TaskService) {
     val id = getPathId(request)
 
     return try {
-      service.byId(id).awaitSingle()
+      val existedTask = service.byId(id).awaitSingle()
       request.bodyToMono<Task>().flatMap {
-        ServerResponse.ok().body(service.update(id, it))
+        val taskToUpdate = it.copy(id = existedTask.id, version = existedTask.version, createdAt = existedTask.createdAt, updatedAt = existedTask.updatedAt)
+        ServerResponse.ok().body(service.update(id, taskToUpdate))
       }.awaitSingle()
     } catch (ex: NoSuchElementException) {
       ex.message?.let { error("ERROR: $it") }

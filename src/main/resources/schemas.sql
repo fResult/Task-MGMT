@@ -1,11 +1,18 @@
+--CREATE TYPE Status AS ENUM('PENDING', 'IN_PROGRESS', 'COMPLETED');
+
 CREATE TABLE IF NOT EXISTS tasks (
    id SERIAL PRIMARY KEY,
    title VARCHAR(75) NOT NULL,
    description VARCHAR(255),
    due_date DATE NOT NULL,
-   status VARCHAR(20) NOT NULL,
+--   status VARCHAR(20) NOT NULL,
+--   status Status NOT NULL,
+   status VARCHAR(20) CHECK (status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED')) NOT NULL,
    created_by INT NOT NULL,
-   last_updated_by INT NOT NULL,
-   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-   last_updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+   updated_by INT NOT NULL,
+--   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+   created_at TIMESTAMP NOT NULL,
+--   updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+   updated_at TIMESTAMP NOT NULL,
+   version INT NOT NULL
 );
