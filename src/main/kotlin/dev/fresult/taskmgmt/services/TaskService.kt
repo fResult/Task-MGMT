@@ -1,8 +1,8 @@
 package dev.fresult.taskmgmt.services
 
+import dev.fresult.taskmgmt.entities.BaseEntity
 import dev.fresult.taskmgmt.entities.Task
 import dev.fresult.taskmgmt.repositories.TaskRepository
-import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -35,5 +35,16 @@ class TaskService(private val repository: TaskRepository) : BaseService<Task, Lo
 
   override fun deleteById(id: Long): Mono<Void> {
     return repository.deleteById(id)
+  }
+
+  val copy: (Task) -> (Task) -> Task = { existingTask ->
+    { originalTask ->
+      originalTask.copy(
+        id = existingTask.id,
+        version = existingTask.version,
+        createdAt = existingTask.createdAt,
+        updatedAt = existingTask.updatedAt,
+      )
+    }
   }
 }

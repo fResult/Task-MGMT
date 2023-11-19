@@ -38,7 +38,8 @@ class TaskHandler(private val service: TaskService) {
     return try {
       val existedTask = service.byId(id).awaitSingle()
       request.bodyToMono<Task>().flatMap {
-        val taskToUpdate = it.copy(id = existedTask.id, version = existedTask.version, createdAt = existedTask.createdAt, updatedAt = existedTask.updatedAt)
+        val taskToUpdate = service.copy(existedTask)(it)
+
         ServerResponse.ok().body(service.update(id, taskToUpdate))
       }.awaitSingle()
     } catch (ex: NoSuchElementException) {
@@ -59,7 +60,5 @@ class TaskHandler(private val service: TaskService) {
     }
   }
 
-  private fun getPathId(request: ServerRequest): Long {
-    return request.pathVariable("id").toLong()
-  }
+  private fun getPathId(request: ServerRequest): Long = request.pathVariable("id").toLong()
 }

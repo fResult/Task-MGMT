@@ -21,16 +21,27 @@ data class Task(
   val status: String,
   val createdBy: Long,
   val updatedBy: Long,
+
   @CreatedDate
   val createdAt: Instant? = null,
+
   @LastModifiedDate
   val updatedAt: Instant? = null,
 
   @Version
-  val version: Int,
-)/* : BaseEntity(id) */ {
+  val version: Int = 1,
+)/* : BaseEntity() */
 
-}
+/* {
+  fun <T: BaseEntity> withBase(base: T): Task {
+//    super.id = base.id
+    super.version = base.version
+    super.createdAt = base.createdAt
+    super.updatedAt = base.updatedAt
+
+    return this
+  }
+}*/
 
 enum class TaskStatus {
   PENDING,
