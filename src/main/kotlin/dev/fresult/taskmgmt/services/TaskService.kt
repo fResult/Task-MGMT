@@ -9,11 +9,10 @@ import reactor.core.publisher.Mono
 
 @Service
 class TaskService(private val repository: TaskRepository) : BaseService<Task, Long> {
-  override fun all(): Flux<Task> {
-    return repository.findAll()/*.delayElements(Duration.ofMillis(300))*/
-      // TODO: Remove log
-      .doOnEach { println(it) }
-  }
+  override fun all(): Flux<Task> = repository.findAll()
+    /*.delayElements(Duration.ofMillis(300))*/
+    // TODO: Remove log
+    .doOnEach { println(it) }
 
   override fun byId(id: Long): Mono<Task> = repository.findById(id)
 

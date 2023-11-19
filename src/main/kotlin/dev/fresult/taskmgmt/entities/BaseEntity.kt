@@ -1,21 +1,33 @@
 package dev.fresult.taskmgmt.entities
 
 import org.springframework.data.annotation.CreatedDate
-import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.annotation.Version
-import org.springframework.data.relational.core.mapping.Column
-import org.springframework.data.relational.core.mapping.Table
 import java.time.Instant
-import java.time.LocalDateTime
 
-open class BaseEntity(open val id: Long? = null) {
-  @CreatedDate
-  var createdAt: Instant? = null
+//open class BaseEntity(open val id: Long? = null) {
+abstract class BaseEntity(open val id: Long? = null) {
+  /**
+   * ```kt
+   * @CreatedDate
+   * override val createdAt: Instant? = null
+   * ```
+   */
+  abstract val createdAt: Instant?
 
-  @LastModifiedDate
-  var updatedAt: Instant? = null
+  /**
+   * ```kt
+   * @LastModifiedDate
+   * override val updatedAt: Instant? = null,
+   * ```
+   */
+  abstract val updatedAt: Instant?
 
-  @Version
-  var version: Int? = null
+  /**
+   * ```kt
+   * @Version
+   * override val version: Int? = 1,
+   * ```
+   */
+  abstract val version: Int?
 }

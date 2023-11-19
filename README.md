@@ -19,7 +19,7 @@ docker-compose -f docker/compose.dev.yml up --build -d
 
 **Run**
 ```shell
-./graclew bootRun
+./gradlew bootRun
 ```
 
 **Data Table change**
@@ -40,6 +40,10 @@ docker-compose -f docker/compose.dev.yml up --build -d
     ```
 4. Run project again
     ```shell
-    ./graclew bootRun
+    ./gradlew bootRun
     # Data table will be re-created follow the `schemas.sql` file
     ```
+
+## TODO
+- [ ] Make `status` accept only possible 3 values in enum
+- [ ] Validate body request to response 400 Bad Request

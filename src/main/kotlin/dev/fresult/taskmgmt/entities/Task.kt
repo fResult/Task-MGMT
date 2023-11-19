@@ -11,8 +11,8 @@ import java.time.LocalDate
 
 @Table("tasks")
 data class Task(
-//  @Id override val id: Long? = null,
-  @Id val id: Long? = null,
+  @Id override val id: Long? = null,
+//  @Id val id: Long? = null,
   @Nonnull val title: String,
   val description: String,
   val dueDate: LocalDate,
@@ -23,14 +23,15 @@ data class Task(
   val updatedBy: Long,
 
   @CreatedDate
-  val createdAt: Instant? = null,
+  override val createdAt: Instant? = null,
 
   @LastModifiedDate
-  val updatedAt: Instant? = null,
+  override val updatedAt: Instant? = null,
 
+  /** Start with version 0 when created */
   @Version
-  val version: Int = 1,
-)/* : BaseEntity() */
+  override val version: Int? = null,
+) : BaseEntity(id)
 
 /* {
   fun <T: BaseEntity> withBase(base: T): Task {
