@@ -1,12 +1,20 @@
---CREATE TYPE Status AS ENUM('PENDING', 'IN_PROGRESS', 'COMPLETED');
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  first_name VARCHAR(100) NOT NULL,
+  last_name VARCHAR(100) NOT NULL,
+  created_by INT NOT NULL,
+  updated_by INT NOT NULL,
+  created_at TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP NOT NULL,
+  version INT NOT NULL
+);
 
+-- CREATE TYPE Status AS ENUM('PENDING', 'IN_PROGRESS', 'COMPLETED');
 CREATE TABLE IF NOT EXISTS tasks (
    id SERIAL PRIMARY KEY,
    title VARCHAR(75) NOT NULL,
    description VARCHAR(255),
    due_date DATE NOT NULL,
---   status VARCHAR(20) NOT NULL,
---   status Status NOT NULL,
    status VARCHAR(20) CHECK (status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED')) NOT NULL,
    created_by INT NOT NULL,
    updated_by INT NOT NULL,
