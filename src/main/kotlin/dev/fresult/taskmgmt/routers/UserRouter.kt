@@ -13,10 +13,10 @@ class UserRouter(private val handler: UserHandler) {
   fun userRoutes(): RouterFunction<ServerResponse> = coRouter {
     "/users".nest {
       GET("", handler::all)
-//      GET("/{id}", handler::byId)
-//      POST("", handler::create)
-//      PUT("/{id}", handler::update)
-//      DELETE("/{id}", handler::deleteById)
+      GET("/{id}", handler::byId)
+      POST("", handler::create)
+      PUT("/{id}", handler::update)
+      DELETE("/{id}", handler::deleteById)
     }
   }
 }

@@ -1,9 +1,11 @@
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
+  email VARCHAR(100) UNIQUE NOT NULL,
+  password VARCHAR(50) NOT NULL,
   first_name VARCHAR(100) NOT NULL,
   last_name VARCHAR(100) NOT NULL,
-  created_by INT NOT NULL,
-  updated_by INT NOT NULL,
+--  created_by INT NOT NULL,
+--  updated_by INT NOT NULL,
   created_at TIMESTAMP NOT NULL,
   updated_at TIMESTAMP NOT NULL,
   version INT NOT NULL
@@ -16,11 +18,12 @@ CREATE TABLE IF NOT EXISTS tasks (
    description VARCHAR(255),
    due_date DATE NOT NULL,
    status VARCHAR(20) CHECK (status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED')) NOT NULL,
-   created_by INT NOT NULL,
-   updated_by INT NOT NULL,
+--   created_by INT NOT NULL,
+--   updated_by INT NOT NULL,
 --   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
    created_at TIMESTAMP NOT NULL,
 --   updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
    updated_at TIMESTAMP NOT NULL,
-   version INT NOT NULL
+   version INT NOT NULL,
+   user_id INT REFERENCES users(id)
 );

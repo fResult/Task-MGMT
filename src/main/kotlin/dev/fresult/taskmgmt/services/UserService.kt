@@ -12,20 +12,26 @@ class UserService(private val repository: UserRepository) : BaseService<User, Lo
     // TODO: Remove log
     .doOnEach { println(it) }
 
-  override fun deleteById(id: Long): Mono<Void> {
-    TODO("Not yet implemented")
-  }
+  override fun byId(id: Long): Mono<User> = repository.findById(id)
 
-  override fun update(id: Long, user: User): Mono<User> {
-    TODO("Not yet implemented")
-  }
+  override fun create(user: User): Mono<User> = repository.save(user)
+    // TODO: Remove log
+    .doOnEach { println("created: ${it.get()}") }
 
-  override fun create(user: User): Mono<User> {
-    TODO("Not yet implemented")
-  }
+  override fun update(id: Long, user: User): Mono<User> = repository.save(user)
+    // TODO: Remove log
+    .doOnEach { println("updated: ${it.get()}") }
 
-  override fun byId(id: Long): Mono<User> {
-    TODO("Not yet implemented")
-  }
+  override fun deleteById(id: Long): Mono<Void> = repository.deleteById(id)
 
+  val copy: (User) -> (User) -> User = { existingUser ->
+    { user ->
+      user.copy(
+        id = existingUser.id,
+        version = existingUser.version,
+        createdAt = existingUser.createdAt,
+        updatedAt = existingUser.updatedAt,
+      )
+    }
+  }
 }
