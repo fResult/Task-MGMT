@@ -1,6 +1,5 @@
 package dev.fresult.taskmgmt.services
 
-import dev.fresult.taskmgmt.entities.BaseEntity
 import dev.fresult.taskmgmt.entities.Task
 import dev.fresult.taskmgmt.repositories.TaskRepository
 import org.springframework.stereotype.Service
@@ -37,8 +36,8 @@ class TaskService(private val repository: TaskRepository) : BaseService<Task, Lo
   }
 
   val copy: (Task) -> (Task) -> Task = { existingTask ->
-    { originalTask ->
-      originalTask.copy(
+    { task ->
+      task.copy(
         id = existingTask.id,
         version = existingTask.version,
         createdAt = existingTask.createdAt,

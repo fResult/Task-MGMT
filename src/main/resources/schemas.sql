@@ -24,6 +24,6 @@ CREATE TABLE IF NOT EXISTS tasks (
    created_at TIMESTAMP NOT NULL,
 --   updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
    updated_at TIMESTAMP NOT NULL,
-   version INT NOT NULL,
-   user_id INT REFERENCES users(id)
+   user_id INT REFERENCES users(id),
+   version INT NOT NULL
 );
