@@ -3,11 +3,8 @@ package dev.fresult.taskmgmt.entities
 import jakarta.validation.constraints.FutureOrPresent
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
-import org.springframework.data.annotation.CreatedDate
-import org.springframework.data.annotation.Id
-import org.springframework.data.annotation.LastModifiedDate
-import org.springframework.data.annotation.Reference
-import org.springframework.data.annotation.Version
+import jakarta.validation.constraints.Size
+import org.springframework.data.annotation.*
 import org.springframework.data.relational.core.mapping.Table
 import java.time.Instant
 import java.time.LocalDate
@@ -17,12 +14,13 @@ data class Task(
   @Id
   override val id: Long? = null,
 
+  @field:Size(min = 3, message = "title must be [3] characters or more")
   @field:NotBlank(message = "title must not be empty")
   val title: String,
 
   val description: String,
 
-  @field:FutureOrPresent(message = "dueDate must not be past")
+  @field:FutureOrPresent(message = "dueDate must not be in the past")
   @field:NotNull(message = "dueDate must not be empty")
   val dueDate: LocalDate,
 
@@ -34,7 +32,7 @@ data class Task(
 //  val createdBy: Long,
 //  val updatedBy: Long,
 
-  @Reference(value = User::class)
+  @Reference(User::class)
   val userId: Long,
 
   @CreatedDate

@@ -12,8 +12,8 @@ import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.*
+import reactor.core.publisher.Flux
 import reactor.kotlin.core.publisher.switchIfEmpty
-import reactor.kotlin.core.publisher.toMono
 
 @Component
 class TaskHandler(
@@ -22,6 +22,7 @@ class TaskHandler(
   private val validator: Validator,
 ) {
   suspend fun all(request: ServerRequest): ServerResponse {
+//    return ServerResponse.ok().body(service.all()).awaitSingle()
     return ServerResponse.ok().bodyAndAwait(service.all().asFlow())
   }
 
@@ -62,15 +63,25 @@ class TaskHandler(
   suspend fun update(request: ServerRequest): ServerResponse {
     val id = getPathId(request)
 
+    // TODO: refactor ExistingTask not found by switchIfEmpty
     return try {
-      val existedTask = service.byId(id).awaitSingle()
-      request.bodyToMono<Task>().flatMap {
-        val taskToUpdate = service.copy(existedTask)(it)
+      val existingTask = service.byId(id).awaitSingle()
+      val updatedTaskMono = request.bodyToMono<Task>().flatMap { body ->
+        val violations = validator.validate(body)
 
-        ServerResponse.ok().body(service.update(id, taskToUpdate))
-      }.awaitSingle()
+        if (violations.isEmpty()) {
+          val taskToUpdate = service.copy(existingTask)(body)
+          ServerResponse.ok().body(service.update(id, taskToUpdate))
+        } else {
+//          val errorResponse = entryMapErrors(violations).toMono().map { BadRequestResponse(it) }
+          val errorResponse = BadRequestResponse(entryMapErrors(violations))
+          ServerResponse.badRequest().bodyValue(errorResponse)
+        }
+      }
+
+      updatedTaskMono.awaitSingle()
     } catch (ex: NoSuchElementException) {
-      ex.message?.let { error("ERROR: $it") }
+      println("ERROR: Not Found Task $ex")
       ServerResponse.notFound().buildAndAwait()
     }
   }
@@ -82,8 +93,19 @@ class TaskHandler(
       service.deleteById(id).awaitSingle()
       ServerResponse.noContent().buildAndAwait()
     } catch (ex: NoSuchElementException) {
-      println("ERROR: $ex")
+      println("ERROR: Not Found Task $ex")
       ServerResponse.noContent().buildAndAwait()
     }
+  }
+
+  suspend fun allByUserId(request: ServerRequest): ServerResponse {
+    val userId = request.pathVariable("userId").toLong()
+
+    return userService.byId(userId).flatMap {
+      println("Found User $it")
+      ServerResponse.ok().body(service.allByUserId(userId))
+    }.switchIfEmpty {
+      ServerResponse.ok().body(Flux.empty<Task>())
+    }.awaitSingle()
   }
 }

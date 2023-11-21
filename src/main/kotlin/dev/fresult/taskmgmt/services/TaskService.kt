@@ -35,6 +35,10 @@ class TaskService(private val repository: TaskRepository) : BaseService<Task, Lo
     return repository.deleteById(id)
   }
 
+  fun allByUserId(userId: Long): Flux<Task> = repository.findAllByUserId(userId)
+    // TODO: Remove log
+    .doOnEach { println("Task by userId [$userId]: ${it.get()}") }
+
   val copy: (Task) -> (Task) -> Task = { existingTask ->
     { task ->
       task.copy(
