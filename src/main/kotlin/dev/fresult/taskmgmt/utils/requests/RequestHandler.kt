@@ -1,4 +1,4 @@
-package dev.fresult.taskmgmt.utils.request
+package dev.fresult.taskmgmt.utils.requests
 
 import org.springframework.web.reactive.function.server.ServerRequest
 

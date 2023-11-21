@@ -3,8 +3,9 @@ package dev.fresult.taskmgmt.handlers
 import dev.fresult.taskmgmt.entities.Task
 import dev.fresult.taskmgmt.services.TaskService
 import dev.fresult.taskmgmt.services.UserService
-import dev.fresult.taskmgmt.utils.request.getPathId
-import dev.fresult.taskmgmt.utils.validations.BadRequestResponse
+import dev.fresult.taskmgmt.utils.requests.getPathId
+import dev.fresult.taskmgmt.utils.responses.BadRequestResponse
+import dev.fresult.taskmgmt.utils.responses.responseNotFound
 import dev.fresult.taskmgmt.utils.validations.entryMapErrors
 import jakarta.validation.Validator
 import kotlinx.coroutines.reactive.asFlow
@@ -21,6 +22,8 @@ class TaskHandler(
   private val userService: UserService,
   private val validator: Validator,
 ) {
+  private val taskRespNotFound = responseNotFound(Task::class)
+
   suspend fun all(request: ServerRequest): ServerResponse {
 //    return ServerResponse.ok().body(service.all()).awaitSingle()
     return ServerResponse.ok().bodyAndAwait(service.all().asFlow())
@@ -31,10 +34,7 @@ class TaskHandler(
 
     return service.byId(id).flatMap {
       ServerResponse.ok().bodyValue(it)
-    }.switchIfEmpty {
-      println("Task with ID $id does not exist.")
-      ServerResponse.notFound().build()
-    }.awaitSingle()
+    }.switchIfEmpty { taskRespNotFound(id) }.awaitSingle()
   }
 
   suspend fun create(request: ServerRequest): ServerResponse {
@@ -80,8 +80,7 @@ class TaskHandler(
 
       updatedTaskMono.awaitSingle()
     } catch (ex: NoSuchElementException) {
-      println("ERROR: Not Found Task $ex")
-      ServerResponse.notFound().buildAndAwait()
+      taskRespNotFound(id).awaitSingle()
     }
   }
 
@@ -92,7 +91,7 @@ class TaskHandler(
     return service.deleteById(id).flatMap {
       noContentResponse
     }.switchIfEmpty{
-      println("ERROR: Not Found Task Id: $id")
+      println("Task with ID $id does not exist")
       noContentResponse
     }.awaitSingle()
   }
@@ -101,7 +100,6 @@ class TaskHandler(
     val userId = request.pathVariable("userId").toLong()
 
     return userService.byId(userId).flatMap {
-      println("Found User $it")
       ServerResponse.ok().body(service.allByUserId(userId))
     }.switchIfEmpty {
       ServerResponse.ok().body(Flux.empty<Task>())

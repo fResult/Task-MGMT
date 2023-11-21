@@ -34,7 +34,7 @@ docker-compose -f docker/compose.dev.yml up --build -d
 3. Delete tables
     ```sql
     \dt+; # To see every tables
-    DROP TABLE <table_name_which_is_changed_definition>;
+    DROP TABLE «table_name»;
     
     exit; # When finish dropping tables
     ```
@@ -48,3 +48,5 @@ docker-compose -f docker/compose.dev.yml up --build -d
 - [x] Validate body request to response 400 Bad Request
 - [ ] Make `status` accept only possible 3 values in enum
 - [ ] Join table for `/tasks/users/:userId` to get both Task and User that relate each other
+- [ ] Make `/tasks/users/:userId` able to retrieve tasks by specific `due dates`, `statuses`, or `created/updated users`.
+- [ ] Create DTO for Tasks by UserId
