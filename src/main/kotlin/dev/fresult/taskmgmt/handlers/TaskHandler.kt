@@ -41,7 +41,6 @@ class TaskHandler(
     return request.bodyToMono(Task::class.java)
       .flatMap { body ->
         val violations = validator.validate(body)
-        println("vio $violations")
 
         if (violations.isEmpty()) {
           userService.byId(body.userId).flatMap {
@@ -88,14 +87,14 @@ class TaskHandler(
 
   suspend fun deleteById(request: ServerRequest): ServerResponse {
     val id = getPathId(request)
+    val noContentResponse = ServerResponse.noContent().build()
 
-    return try {
-      service.deleteById(id).awaitSingle()
-      ServerResponse.noContent().buildAndAwait()
-    } catch (ex: NoSuchElementException) {
-      println("ERROR: Not Found Task $ex")
-      ServerResponse.noContent().buildAndAwait()
-    }
+    return service.deleteById(id).flatMap {
+      noContentResponse
+    }.switchIfEmpty{
+      println("ERROR: Not Found Task Id: $id")
+      noContentResponse
+    }.awaitSingle()
   }
 
   suspend fun allByUserId(request: ServerRequest): ServerResponse {

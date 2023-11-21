@@ -45,5 +45,6 @@ docker-compose -f docker/compose.dev.yml up --build -d
     ```
 
 ## TODO
+- [x] Validate body request to response 400 Bad Request
 - [ ] Make `status` accept only possible 3 values in enum
-- [ ] Validate body request to response 400 Bad Request
+- [ ] Join table for `/tasks/users/:userId` to get both Task and User that relate each other
