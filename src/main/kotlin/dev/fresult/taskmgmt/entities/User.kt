@@ -1,5 +1,6 @@
 package dev.fresult.taskmgmt.entities
 
+import dev.fresult.taskmgmt.dtos.tasks.UserResponse
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
@@ -38,4 +39,13 @@ data class User(
   /** Start with version 0 when created */
   @Version
   override val version: Int? = null,
-) : BaseEntity(id)
+) : BaseEntity(id) {
+  fun toUserResponse(): UserResponse = UserResponse(
+    id = id!!,
+    email = email,
+    firstName = firstName,
+    lastName = lastName,
+    createdAt = createdAt!!,
+    updatedAt = updatedAt!!,
+  )
+}

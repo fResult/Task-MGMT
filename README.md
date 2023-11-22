@@ -33,10 +33,10 @@ docker-compose -f docker/compose.dev.yml up --build -d
     ```
 3. Delete tables
     ```sql
-    \dt+; # To see every tables
+    \dt+; -- To see every tables
     DROP TABLE «table_name»;
     
-    exit; # When finish dropping tables
+    exit; -- When finish dropping tables
     ```
 4. Run project again
     ```shell

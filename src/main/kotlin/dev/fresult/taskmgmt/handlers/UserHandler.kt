@@ -19,13 +19,13 @@ class UserHandler(private val service: UserService, private val validator: Valid
   private val userResponseNotFound = responseNotFound(User::class)
 
   suspend fun all(request: ServerRequest) =
-    ServerResponse.ok().bodyAndAwait(service.all().asFlow())
+    ServerResponse.ok().bodyAndAwait(service.all().map(User::toUserResponse).asFlow())
 
   suspend fun byId(request: ServerRequest): ServerResponse {
     val id = getPathId(request)
 
     return service.byId(id).flatMap {
-      ServerResponse.ok().bodyValue(it)
+      ServerResponse.ok().bodyValue(it.toUserResponse())
     }.switchIfEmpty { userResponseNotFound(id) }.awaitSingle()
   }
 
@@ -35,7 +35,7 @@ class UserHandler(private val service: UserService, private val validator: Valid
         val violations = validator.validate(body)
 
         if (violations.isEmpty()) {
-          ServerResponse.status(HttpStatus.CREATED).body(service.create(body))
+          ServerResponse.status(HttpStatus.CREATED).body(service.create(body).map(User::toUserResponse))
         } else {
           val errorResponse = BadRequestResponse(entryMapErrors(violations))
           ServerResponse.badRequest().bodyValue(errorResponse)
@@ -53,7 +53,7 @@ class UserHandler(private val service: UserService, private val validator: Valid
 
         if (violations.isEmpty()) {
           val userToUpdate = service.copy(exitingUser)(body)
-          ServerResponse.ok().body(service.update(id, userToUpdate))
+          ServerResponse.ok().body(service.update(id, userToUpdate).map(User::toUserResponse))
         } else {
           val errorResponse = BadRequestResponse(entryMapErrors(violations))
           ServerResponse.badRequest().bodyValue(errorResponse)
