@@ -1,5 +1,6 @@
 package dev.fresult.taskmgmt.handlers
 
+import dev.fresult.taskmgmt.constants.ConditionQueries
 import dev.fresult.taskmgmt.entities.Task
 import dev.fresult.taskmgmt.entities.User
 import dev.fresult.taskmgmt.services.TaskService
@@ -99,12 +100,23 @@ class TaskHandler(
   }
 
   suspend fun allByUserId(request: ServerRequest): ServerResponse {
+    // TODO: Refactor here
     val userId = request.pathVariable("userId").toLong()
+    val dueDate = request.queryParam("due-date")
+    val status = request.queryParam("status")
+    val createdBy = request.queryParam("created-by")
+    val updatedBy = request.queryParam("updated-by")
+    val conditions = listOf<ConditionQueries>(
+      Triple("due_date", "dueDate", dueDate),
+      Triple("status", "status", status),
+      Triple("created_by", "createdBy", createdBy),
+      Triple("updated_by", "updatedBy", updatedBy),
+    )
 
     return userService.byId(userId)
       .map(User::toUserResponse)
       .flatMap { user ->
-        ServerResponse.ok().body(service.allByUserId(userId).map { task ->
+        ServerResponse.ok().body(service.allByUserId(userId, conditions).map { task ->
           task.toTaskWithUserResponse(user)
         })
       }.switchIfEmpty {
