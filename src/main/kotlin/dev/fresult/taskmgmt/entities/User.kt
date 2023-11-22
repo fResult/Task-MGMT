@@ -1,6 +1,6 @@
 package dev.fresult.taskmgmt.entities
 
-import dev.fresult.taskmgmt.dtos.tasks.UserResponse
+import dev.fresult.taskmgmt.dtos.UserResponse
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
@@ -18,6 +18,7 @@ data class User(
   @field:Email(message = "email format must be correct (eg. email@example.com)")
   val email: String,
 
+  // TODO: Hash Password
   @field:NotBlank(message = "password must not be empty")
   @field:Size(min = 6, message = "password must be [6] characters or more")
   val password: String,

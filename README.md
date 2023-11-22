@@ -46,7 +46,9 @@ docker-compose -f docker/compose.dev.yml up --build -d
 
 ## TODO
 - [x] Validate body request to response 400 Bad Request
+- [x] Create DTO for Tasks by UserId
 - [ ] Make `status` accept only possible 3 values in enum
-- [ ] Join table for `/tasks/users/:userId` to get both Task and User that relate each other
 - [ ] Make `/tasks/users/:userId` able to retrieve tasks by specific `due dates`, `statuses`, or `created/updated users`.
-- [ ] Create DTO for Tasks by UserId
+- [ ] Do authentication for most of API routes
+- [ ] Hash Password
+- [ ] Do Authentication

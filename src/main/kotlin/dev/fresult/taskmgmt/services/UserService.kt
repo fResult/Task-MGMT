@@ -24,6 +24,8 @@ class UserService(private val repository: UserRepository) : BaseService<User, Lo
 
   override fun deleteById(id: Long): Mono<Void> = repository.deleteById(id)
 
+  fun existsById(id: Long) = repository.existsById(id)
+
   val copy: (User) -> (User) -> User = { existingUser ->
     { user ->
       user.copy(

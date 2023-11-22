@@ -1,5 +1,8 @@
 package dev.fresult.taskmgmt.entities
 
+import dev.fresult.taskmgmt.dtos.TaskResponse
+import dev.fresult.taskmgmt.dtos.TaskWithOwnerResponse
+import dev.fresult.taskmgmt.dtos.UserResponse
 import jakarta.validation.constraints.FutureOrPresent
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
@@ -18,7 +21,7 @@ data class Task(
   @field:NotBlank(message = "title must not be empty")
   val title: String,
 
-  val description: String,
+  val description: String?,
 
   @field:FutureOrPresent(message = "dueDate must not be in the past")
   @field:NotNull(message = "dueDate must not be empty")
@@ -29,8 +32,8 @@ data class Task(
   // val status: TaskStatus,
   @field:NotNull(message = "status must not be empty")
   val status: TaskStatus,
-//  val createdBy: Long,
-//  val updatedBy: Long,
+  // val createdBy: Long,
+  // val updatedBy: Long,
 
   @Reference(User::class)
   val userId: Long,
@@ -44,7 +47,27 @@ data class Task(
   /** Start with version 0 when created */
   @Version
   override val version: Int? = null,
-) : BaseEntity(id)
+) : BaseEntity(id) {
+  fun toTaskResponse(): TaskResponse =
+    TaskResponse(
+      id = id!!,
+      title = title,
+      description = description!!,
+      dueDate = dueDate,
+      status = status,
+      userId = userId
+    )
+
+  fun toTaskWithUserResponse(userResp: UserResponse): TaskWithOwnerResponse =
+    TaskWithOwnerResponse(
+      id = id!!,
+      title = title,
+      description = description!!,
+      dueDate = dueDate,
+      status = status,
+      owner = userResp
+    )
+}
 
 enum class TaskStatus {
   PENDING,

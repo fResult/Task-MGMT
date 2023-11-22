@@ -1,4 +1,4 @@
-package dev.fresult.taskmgmt.dtos.tasks
+package dev.fresult.taskmgmt.dtos
 
 import java.time.Instant
 

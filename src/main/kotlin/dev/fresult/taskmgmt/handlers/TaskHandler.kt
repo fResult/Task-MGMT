@@ -1,6 +1,7 @@
 package dev.fresult.taskmgmt.handlers
 
 import dev.fresult.taskmgmt.entities.Task
+import dev.fresult.taskmgmt.entities.User
 import dev.fresult.taskmgmt.services.TaskService
 import dev.fresult.taskmgmt.services.UserService
 import dev.fresult.taskmgmt.utils.requests.getPathId
@@ -25,15 +26,15 @@ class TaskHandler(
   private val taskRespNotFound = responseNotFound(Task::class)
 
   suspend fun all(request: ServerRequest): ServerResponse {
-//    return ServerResponse.ok().body(service.all()).awaitSingle()
-    return ServerResponse.ok().bodyAndAwait(service.all().asFlow())
+//    return ServerResponse.ok().body(service.all().map(Task::toTaskResponse)).awaitSingle()
+    return ServerResponse.ok().bodyAndAwait(service.all().map(Task::toTaskResponse).asFlow())
   }
 
   suspend fun byId(request: ServerRequest): ServerResponse {
     val id = getPathId(request)
 
     return service.byId(id).flatMap {
-      ServerResponse.ok().bodyValue(it)
+      ServerResponse.ok().bodyValue(it.toTaskResponse())
     }.switchIfEmpty { taskRespNotFound(id) }.awaitSingle()
   }
 
@@ -43,9 +44,10 @@ class TaskHandler(
         val violations = validator.validate(body)
 
         if (violations.isEmpty()) {
-          userService.byId(body.userId).flatMap {
-            ServerResponse.status(HttpStatus.CREATED).body(service.create(body))
-          }.switchIfEmpty {
+          userService.existsById(body.userId).flatMap { isExisting ->
+            if (isExisting)
+              ServerResponse.status(HttpStatus.CREATED).body(service.create(body).map(Task::toTaskResponse))
+
             val errorMessage = "User with ID ${body.userId} does not exist."
             println(errorMessage)
 //            val errorResponse = BadRequestResponse(mapOf(Pair("userId", errorMessage)))
@@ -70,7 +72,7 @@ class TaskHandler(
 
         if (violations.isEmpty()) {
           val taskToUpdate = service.copy(existingTask)(body)
-          ServerResponse.ok().body(service.update(id, taskToUpdate))
+          ServerResponse.ok().body(service.update(id, taskToUpdate).map(Task::toTaskResponse))
         } else {
 //          val errorResponse = entryMapErrors(violations).toMono().map { BadRequestResponse(it) }
           val errorResponse = BadRequestResponse(entryMapErrors(violations))
@@ -90,7 +92,7 @@ class TaskHandler(
 
     return service.deleteById(id).flatMap {
       noContentResponse
-    }.switchIfEmpty{
+    }.switchIfEmpty {
       println("Task with ID $id does not exist")
       noContentResponse
     }.awaitSingle()
@@ -99,10 +101,14 @@ class TaskHandler(
   suspend fun allByUserId(request: ServerRequest): ServerResponse {
     val userId = request.pathVariable("userId").toLong()
 
-    return userService.byId(userId).flatMap {
-      ServerResponse.ok().body(service.allByUserId(userId))
-    }.switchIfEmpty {
-      ServerResponse.ok().body(Flux.empty<Task>())
-    }.awaitSingle()
+    return userService.byId(userId)
+      .map(User::toUserResponse)
+      .flatMap { user ->
+        ServerResponse.ok().body(service.allByUserId(userId).map { task ->
+          task.toTaskWithUserResponse(user)
+        })
+      }.switchIfEmpty {
+        ServerResponse.ok().body(Flux.empty<Task>())
+      }.awaitSingle()
   }
 }

@@ -6,6 +6,7 @@ import org.springframework.data.r2dbc.repository.R2dbcRepository
 import reactor.core.publisher.Flux
 
 interface TaskRepository : R2dbcRepository<Task, Long> {
-  @Query("SELECT * FROM tasks WHERE user_id = :userId")
+// @Query("SELECT * FROM tasks t RIGHT JOIN users u ON u.id = t.user_id WHERE user_id = :userId")
+@Query("SELECT * FROM tasks WHERE user_id = :userId")
   fun findAllByUserId(userId: Long): Flux<Task>
 }
