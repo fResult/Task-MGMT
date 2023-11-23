@@ -1,11 +1,13 @@
 package dev.fresult.taskmgmt.handlers
 
-import dev.fresult.taskmgmt.constants.ConditionQueries
+import dev.fresult.taskmgmt.constants.TaskConditions
 import dev.fresult.taskmgmt.entities.Task
+import dev.fresult.taskmgmt.entities.TaskStatus
 import dev.fresult.taskmgmt.entities.User
 import dev.fresult.taskmgmt.services.TaskService
 import dev.fresult.taskmgmt.services.UserService
 import dev.fresult.taskmgmt.utils.requests.getPathId
+import dev.fresult.taskmgmt.utils.requests.getQueryParam
 import dev.fresult.taskmgmt.utils.responses.BadRequestResponse
 import dev.fresult.taskmgmt.utils.responses.responseNotFound
 import dev.fresult.taskmgmt.utils.validations.entryMapErrors
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.*
 import reactor.core.publisher.Flux
 import reactor.kotlin.core.publisher.switchIfEmpty
+import java.time.LocalDate
 
 @Component
 class TaskHandler(
@@ -100,17 +103,29 @@ class TaskHandler(
   }
 
   suspend fun allByUserId(request: ServerRequest): ServerResponse {
+    val getRequestParam = getQueryParam(request)
+
     // TODO: Refactor here
     val userId = request.pathVariable("userId").toLong()
-    val dueDate = request.queryParam("due-date")
-    val status = request.queryParam("status")
-    val createdBy = request.queryParam("created-by")
-    val updatedBy = request.queryParam("updated-by")
-    val conditions = listOf<ConditionQueries>(
-      Triple("due_date", "dueDate", dueDate),
-      Triple("status", "status", status),
-      Triple("created_by", "createdBy", createdBy),
-      Triple("updated_by", "updatedBy", updatedBy),
+    // TODO: Validate due-date date format -> It's 500 when invalid format right now
+    val dueDate = getRequestParam("due-date")
+
+    val statusParam = request.queryParam("status")
+    val status = (if (statusParam.isPresent) statusParam.get() else TaskStatus.PENDING) as String
+    // TODO: Validate status -> It's 500 when invalid format right now
+    val taskStatus = enumValueOf<TaskStatus>(status)
+    // TODO: Validate created-by date format -> It's 500 when invalid format right now
+    val createdBy = getRequestParam("created-by")
+    // TODO: Validate updated-by date format -> It's 500 when invalid format right now
+    val updatedBy = getRequestParam("updated-by")
+
+    val (y, m, d) = dueDate.orEmpty().split("-").stream().map(String::toInt).toList()
+    val dueDateLocalDate = LocalDate.of(y, m, d)
+    val conditions = TaskConditions(
+      dueDate = dueDateLocalDate,
+      status = taskStatus,
+      createdBy = createdBy?.toLong(),
+      updatedBy = updatedBy?.toLong(),
     )
 
     return userService.byId(userId)

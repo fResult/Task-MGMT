@@ -1,9 +1,11 @@
 package dev.fresult.taskmgmt.constants
 
-import java.util.*
+import dev.fresult.taskmgmt.entities.TaskStatus
+import java.time.LocalDate
 
-private typealias ColumnName = String
-private typealias Variable = String
-private typealias Value = String
-
-typealias ConditionQueries = Triple<ColumnName, Variable, Optional<Value>>
+data class TaskConditions(
+  val dueDate: LocalDate? = null,
+  val status: TaskStatus? = null,
+  val createdBy: Long? = null,
+  val updatedBy: Long? = null
+)

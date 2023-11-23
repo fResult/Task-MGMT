@@ -1,0 +1,12 @@
+\set userId 1
+\set dueDate '2024-11-20'
+\set status 'PENDING'
+-- :createdBy = 1; -- user id: 1
+-- :updatedBy = 2; -- user id: 2
+
+SELECT * FROM tasks
+WHERE user_id = :userId
+  AND (:'dueDate' IS NULL OR due_date = :'dueDate')
+  AND (:'status' IS NULL OR status = :'status')
+  -- AND (:'createdBy' IS NULL OR created_by = :'createdBy')
+  -- AND (:'updatedBy' IS NULL OR updated_by = :'updatedBy')

@@ -1,6 +1,6 @@
 package dev.fresult.taskmgmt.services
 
-import dev.fresult.taskmgmt.constants.ConditionQueries
+import dev.fresult.taskmgmt.constants.TaskConditions
 import dev.fresult.taskmgmt.entities.Task
 import dev.fresult.taskmgmt.repositories.TaskRepository
 import dev.fresult.taskmgmt.repositories.TaskRepositoryConcrete
@@ -40,10 +40,20 @@ class TaskService(
     return repository.deleteById(id)
   }
 
-  fun allByUserId(userId: Long, conditions: List<ConditionQueries>): Flux<Task> =
-    repositoryConcrete.findAllByUserId(userId, conditions)
+  fun allByUserId(userId: Long, conditions: TaskConditions): Flux<Task> {
+    val (dueDate, status, createdBy, updatedBy) = conditions
+
+    return repository.findAllByUserId(
+      userId,
+      dueDate,
+      status,
+      // FIXME: createdBy is redundant with userId
+      createdBy,
+      updatedBy,
+    )
       // TODO: Remove log
       .doOnEach { println("Task by userId [$userId]: ${it.get()}") }
+  }
 
   val copy: (Task) -> (Task) -> Task = { existingTask ->
     { task ->
