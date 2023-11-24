@@ -109,7 +109,7 @@ class TaskHandler(
     // TODO: Refactor here
     val userId = request.pathVariable("userId").toLong()
     // TODO: Validate due-date date format -> It's 500 when invalid format right now
-    val dueDate = getRequestParam("due-date")
+    val dueDate = getRequestParam("due-date").orEmpty()
 
     val statusParam = request.queryParam("status")
     val status = (if (statusParam.isPresent) statusParam.get() else TaskStatus.PENDING) as String
@@ -120,8 +120,11 @@ class TaskHandler(
     // TODO: Validate updated-by date format -> It's 500 when invalid format right now
     val updatedBy = getRequestParam("updated-by")
 
-    val (y, m, d) = dueDate.orEmpty().split("-").stream().map(String::toInt).toList()
-    val dueDateLocalDate = LocalDate.of(y, m, d)
+    val ymd = dueDate.split("-").stream().filter { it.isNotBlank() }.map(String::toInt).toList()
+    val dueDateLocalDate = if (ymd.size == 3) {
+      val (y, m, d) = ymd
+      LocalDate.of(y, m, d)
+    } else null
     val conditions = TaskConditions(
       dueDate = dueDateLocalDate,
       status = taskStatus,
