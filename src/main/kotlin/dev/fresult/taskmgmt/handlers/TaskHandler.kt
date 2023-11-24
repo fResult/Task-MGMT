@@ -49,14 +49,15 @@ class TaskHandler(
 
         if (violations.isEmpty()) {
           userService.existsById(body.userId).flatMap { isExisting ->
-            if (isExisting)
+            if (isExisting) {
               ServerResponse.status(HttpStatus.CREATED).body(service.create(body).map(Task::toTaskResponse))
-
-            val errorMessage = "User with ID ${body.userId} does not exist."
-            println(errorMessage)
+            } else {
+              val errorMessage = "User with ID ${body.userId} does not exist."
+              println(errorMessage)
 //            val errorResponse = BadRequestResponse(mapOf(Pair("userId", errorMessage)))
-            val errorResponse = BadRequestResponse(mapOf("userId" to errorMessage))
-            ServerResponse.badRequest().bodyValue(errorResponse)
+              val errorResponse = BadRequestResponse(mapOf("userId" to errorMessage))
+              ServerResponse.badRequest().bodyValue(errorResponse)
+            }
           }
         } else {
           val errorResponse = BadRequestResponse(entryMapErrors(violations))
