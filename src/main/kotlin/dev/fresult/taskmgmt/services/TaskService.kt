@@ -48,20 +48,21 @@ class TaskService(
       dueDate,
       status,
       // FIXME: createdBy is redundant with userId
-      createdBy,
-      updatedBy,
+//      createdBy,
+//      updatedBy,
     )
       // TODO: Remove log
       .doOnEach { println("Task by userId [$userId]: ${it.get()}") }
   }
 
-  val copy: (Task) -> (Task) -> Task = { existingTask ->
+  val copyToUpdate: (Task) -> (Task) -> Task = { existingTask ->
     { task ->
       task.copy(
         id = existingTask.id,
         version = existingTask.version,
         createdAt = existingTask.createdAt,
         updatedAt = existingTask.updatedAt,
+        createdBy = existingTask.createdBy
       )
     }
   }

@@ -27,16 +27,16 @@ interface TaskRepository : R2dbcRepository<Task, Long> {
     "SELECT * FROM tasks " +
         "WHERE user_id = :userId " +
         "AND (:dueDate IS NULL OR due_date = :dueDate) " +
-        "AND (:status IS NULL OR status = :status) " +
-        "AND (:createdBy IS NULL OR status = :createdBy) " +
-        "AND (:updatedBy IS NULL OR status = :updatedBy);"
+        "AND (:status IS NULL OR status = :status);"
+//        "AND (:createdBy IS NULL OR created_by = :createdBy) "
+//        "AND (:updatedBy IS NULL OR updated_by = :updatedBy);"
   )
   fun findAllByUserId(
     userId: Long,
-    dueDate: LocalDate?,
-    status: TaskStatus?,
-    createdBy: Long?,
-    updatedBy: Long?
+    dueDate: LocalDate? = null,
+    status: TaskStatus? = null,
+//    createdBy: Long? = 1,
+//    updatedBy: Long? = null,
   ): Flux<Task>
 }
 

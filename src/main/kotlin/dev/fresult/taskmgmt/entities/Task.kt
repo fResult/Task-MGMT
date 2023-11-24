@@ -1,8 +1,6 @@
 package dev.fresult.taskmgmt.entities
 
-import dev.fresult.taskmgmt.dtos.TaskResponse
-import dev.fresult.taskmgmt.dtos.TaskWithOwnerResponse
-import dev.fresult.taskmgmt.dtos.UserResponse
+import dev.fresult.taskmgmt.dtos.*
 import jakarta.validation.constraints.FutureOrPresent
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
@@ -17,26 +15,18 @@ data class Task(
   @Id
   override val id: Long? = null,
 
-  @field:Size(min = 3, message = "title must be [3] characters or more")
-  @field:NotBlank(message = "title must not be empty")
   val title: String,
-
   val description: String?,
-
-  @field:FutureOrPresent(message = "dueDate must not be in the past")
-  @field:NotNull(message = "dueDate must not be empty")
   val dueDate: LocalDate,
-
-  // TODO: Use enum as a type
-  // @Column(converter = TaskStatusConverter::class.java)
-  // val status: TaskStatus,
-  @field:NotNull(message = "status must not be empty")
   val status: TaskStatus,
-  // val createdBy: Long,
-  // val updatedBy: Long,
 
+  @CreatedBy
   @Reference(User::class)
-  val userId: Long,
+  val createdBy: Long? = null,
+
+  @LastModifiedBy
+  @Reference(User::class)
+  val updatedBy: Long? = null,
 
   @CreatedDate
   override val createdAt: Instant? = null,
@@ -48,15 +38,54 @@ data class Task(
   @Version
   override val version: Int? = null,
 ) : BaseEntity(id) {
-  fun toTaskResponse(): TaskResponse =
-    TaskResponse(
+  companion object {
+    fun fromTaskRequest(body: TaskRequest): Task =
+      Task(
+        title = body.title,
+        description = body.description,
+        dueDate = body.dueDate,
+        status = body.status,
+        createdBy = body.userId,
+        updatedBy = body.userId,
+      )
+
+    fun fromUpdateTaskRequest(body: TaskRequest): Task =
+      Task(
+        title = body.title,
+        description = body.description,
+        dueDate = body.dueDate,
+        status = body.status,
+        updatedBy = body.userId,
+      )
+
+  }
+
+  fun toTaskResponse(): TaskResponse = TaskResponse(
+    id = id!!,
+    title = title,
+    description = description,
+    dueDate = dueDate,
+    status = status,
+    createdBy = createdBy!!,
+    updatedBy = updatedBy!!,
+    createdAt = createdAt!!,
+    updatedAt = updatedAt!!,
+  )
+
+  fun toCreateTaskResponse(user: UserResponse): CreateTaskResponse = toUpdateTaskResponse(user, user)
+
+  fun toUpdateTaskResponse(owner: UserResponse, updater: UserResponse): CreateTaskResponse {
+    val getFullName: (UserResponse) -> String = { listOf(it.firstName, it.lastName).joinToString(" ") }
+    return CreateTaskResponse(
       id = id!!,
       title = title,
       description = description!!,
       dueDate = dueDate,
       status = status,
-      userId = userId
+      createdBy = getFullName(owner),
+      updatedBy = getFullName(updater),
     )
+  }
 
   fun toTaskWithUserResponse(userResp: UserResponse): TaskWithOwnerResponse =
     TaskWithOwnerResponse(
@@ -65,7 +94,8 @@ data class Task(
       description = description!!,
       dueDate = dueDate,
       status = status,
-      owner = userResp
+      owner = userResp,
+      updater = userResp,
     )
 }
 

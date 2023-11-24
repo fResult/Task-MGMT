@@ -1,6 +1,7 @@
 package dev.fresult.taskmgmt.handlers
 
 import dev.fresult.taskmgmt.constants.TaskConditions
+import dev.fresult.taskmgmt.dtos.TaskRequest
 import dev.fresult.taskmgmt.entities.Task
 import dev.fresult.taskmgmt.entities.TaskStatus
 import dev.fresult.taskmgmt.entities.User
@@ -43,21 +44,21 @@ class TaskHandler(
   }
 
   suspend fun create(request: ServerRequest): ServerResponse {
-    return request.bodyToMono(Task::class.java)
+    return request.bodyToMono<TaskRequest>()
       .flatMap { body ->
         val violations = validator.validate(body)
 
         if (violations.isEmpty()) {
-          userService.existsById(body.userId).flatMap { isExisting ->
-            if (isExisting) {
-              ServerResponse.status(HttpStatus.CREATED).body(service.create(body).map(Task::toTaskResponse))
-            } else {
-              val errorMessage = "User with ID ${body.userId} does not exist."
-              println(errorMessage)
+          userService.byId(body.userId).map(User::toUserResponse).flatMap { exisingUser ->
+            val taskToCreate = Task.fromTaskRequest(body)
+            val createdTask = service.create(taskToCreate)
+            ServerResponse.status(HttpStatus.CREATED).body(createdTask.map(Task::toTaskResponse))
+          }.switchIfEmpty {
+            val errorMessage = "User with ID ${body.userId} does not exist."
+            println(errorMessage)
 //            val errorResponse = BadRequestResponse(mapOf(Pair("userId", errorMessage)))
-              val errorResponse = BadRequestResponse(mapOf("userId" to errorMessage))
-              ServerResponse.badRequest().bodyValue(errorResponse)
-            }
+            val errorResponse = BadRequestResponse(mapOf("userId" to errorMessage))
+            ServerResponse.badRequest().bodyValue(errorResponse)
           }
         } else {
           val errorResponse = BadRequestResponse(entryMapErrors(violations))
@@ -72,11 +73,12 @@ class TaskHandler(
     // TODO: refactor ExistingTask not found by switchIfEmpty
     return try {
       val existingTask = service.byId(id).awaitSingle()
-      val updatedTaskMono = request.bodyToMono<Task>().flatMap { body ->
+      val updatedTaskMono = request.bodyToMono<TaskRequest>().flatMap { body ->
         val violations = validator.validate(body)
 
         if (violations.isEmpty()) {
-          val taskToUpdate = service.copy(existingTask)(body)
+          val taskFromBody = Task.fromTaskRequest(body)
+          val taskToUpdate = service.copyToUpdate(existingTask)(taskFromBody)
           ServerResponse.ok().body(service.update(id, taskToUpdate).map(Task::toTaskResponse))
         } else {
 //          val errorResponse = entryMapErrors(violations).toMono().map { BadRequestResponse(it) }
@@ -128,8 +130,8 @@ class TaskHandler(
     val conditions = TaskConditions(
       dueDate = dueDateLocalDate,
       status = taskStatus,
-      createdBy = createdBy?.toLong(),
-      updatedBy = updatedBy?.toLong(),
+//      createdBy = createdBy?.toLong(),
+//      updatedBy = updatedBy?.toLong(),
     )
 
     return userService.byId(userId)
