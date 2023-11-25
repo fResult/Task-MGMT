@@ -6,6 +6,9 @@
 4. Kotlin Plugin: (for IntelliJ IDEA’s user)
 5. Docker (and Docker Compose)
 
+## API Documentation
+See [API_DOC.md](/API_DOC.md)
+
 ## Scripts
 **Prepare**
 ```shell
@@ -51,4 +54,3 @@ docker-compose -f docker/compose.dev.yml up --build -d
 - [ ] Make `/tasks/users/:userId` able to retrieve tasks by specific `due dates`, `statuses`, or `created/updated users`.
 - [ ] Do authentication for most of API routes
 - [ ] Hash Password
-- [ ] Do Authentication
