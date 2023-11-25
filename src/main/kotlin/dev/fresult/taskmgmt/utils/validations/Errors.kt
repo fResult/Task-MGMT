@@ -1,7 +1,6 @@
 package dev.fresult.taskmgmt.utils.validations
 
 import jakarta.validation.ConstraintViolation
-import org.springframework.http.HttpStatus
 
 fun <T> joinToJsonError(violations: Set<ConstraintViolation<T>>): String =
   "{ ${

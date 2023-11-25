@@ -98,7 +98,7 @@ class TaskHandler(
             val createdTask = service.create(taskToCreate)
             ServerResponse.status(HttpStatus.CREATED).body(createdTask.map(Task::toTaskResponse))
           }.switchIfEmpty {
-            val errorMessage = "User with ID ${body.userId} does not exist."
+            val errorMessage = "User with ID [${body.userId}] does not exist"
             println(errorMessage)
 //            val errorResponse = BadRequestResponse(mapOf(Pair("userId", errorMessage)))
             val errorResponse = BadRequestResponse(mapOf("userId" to errorMessage))
