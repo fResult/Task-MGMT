@@ -1,6 +1,7 @@
 package dev.fresult.taskmgmt.services
 
-import dev.fresult.taskmgmt.constants.TaskConditions
+import dev.fresult.taskmgmt.dtos.TaskQueryParamValues
+import dev.fresult.taskmgmt.dtos.TaskQueryParams
 import dev.fresult.taskmgmt.entities.Task
 import dev.fresult.taskmgmt.repositories.TaskRepository
 import dev.fresult.taskmgmt.repositories.TaskRepositoryConcrete
@@ -40,7 +41,7 @@ class TaskService(
     return repository.deleteById(id)
   }
 
-  fun allByUserId(userId: Long, conditions: TaskConditions): Flux<Task> {
+  fun allByUserId(userId: Long, conditions: TaskQueryParams): Flux<Task> {
     val (dueDate, status, createdBy, updatedBy) = conditions
 
     return repository.findAllByUserId(
@@ -53,6 +54,10 @@ class TaskService(
     )
       // TODO: Remove log
       .doOnEach { println("Task by userId [$userId]: ${it.get()}") }
+  }
+
+  fun allByQueryParams(taskQueryParams: TaskQueryParamValues): Flux<Task> {
+    TODO("Not yet implemented")
   }
 
   val copyToUpdate: (Task) -> (Task) -> Task = { existingTask ->

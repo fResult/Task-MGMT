@@ -1,6 +1,7 @@
 package dev.fresult.taskmgmt.handlers
 
-import dev.fresult.taskmgmt.constants.TaskConditions
+import dev.fresult.taskmgmt.dtos.TaskQueryParamValues
+import dev.fresult.taskmgmt.dtos.TaskQueryParams
 import dev.fresult.taskmgmt.dtos.TaskRequest
 import dev.fresult.taskmgmt.entities.Task
 import dev.fresult.taskmgmt.entities.TaskStatus
@@ -9,17 +10,21 @@ import dev.fresult.taskmgmt.services.TaskService
 import dev.fresult.taskmgmt.services.UserService
 import dev.fresult.taskmgmt.utils.requests.getPathId
 import dev.fresult.taskmgmt.utils.requests.getQueryParam
+import dev.fresult.taskmgmt.utils.requests.getQueryParamValues
 import dev.fresult.taskmgmt.utils.responses.BadRequestResponse
 import dev.fresult.taskmgmt.utils.responses.responseNotFound
+import dev.fresult.taskmgmt.utils.then
 import dev.fresult.taskmgmt.utils.validations.entryMapErrors
 import jakarta.validation.Validator
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
+import org.springframework.util.MultiValueMap
 import org.springframework.web.reactive.function.server.*
 import reactor.core.publisher.Flux
 import reactor.kotlin.core.publisher.switchIfEmpty
+import reactor.kotlin.core.publisher.toFlux
 import java.time.LocalDate
 
 @Component
@@ -31,8 +36,47 @@ class TaskHandler(
   private val taskRespNotFound = responseNotFound(Task::class)
 
   suspend fun all(request: ServerRequest): ServerResponse {
-//    return ServerResponse.ok().body(service.all().map(Task::toTaskResponse)).awaitSingle()
-    return ServerResponse.ok().bodyAndAwait(service.all().map(Task::toTaskResponse).asFlow())
+    val queryParams = request.queryParams()
+    val getRequestParamValues = getQueryParamValues(queryParams)
+    fun mapToLocalDate(dateStr: String): LocalDate {
+      val ymd = dateStr.split("-").stream().filter(String::isNotBlank).map(String::toInt).toList()
+
+      return if (ymd.size == 3) {
+        val (y, m, d) = ymd
+        LocalDate.of(y, m, d)
+      } else {
+        throw IllegalArgumentException("[«field»] format should be [«date_pattern»]")
+      }
+    }
+
+    fun toLocalDates(paramValues: List<String>?): List<LocalDate> {
+      return paramValues.orEmpty().stream().filter(String::isNotBlank).map(::mapToLocalDate).toList()
+    }
+
+    fun toStatuses(paramValues: List<String>?): List<TaskStatus> {
+      return paramValues.orEmpty().stream().map { enumValueOf<TaskStatus>(it) }.toList()
+    }
+
+    fun toLongs(paramValues: List<String>?): List<Long> {
+      return paramValues.orEmpty().stream().map(String::toLong).toList()
+    }
+
+    val getIds =  getRequestParamValues then ::toLongs
+
+    val taskQueryParams = TaskQueryParamValues(
+      dueDates = (getRequestParamValues then ::toLocalDates)("due-date"),
+      statuses = (getRequestParamValues then ::toStatuses)("status"),
+      createdByUsers = getIds("created-by"),
+      updatedByUsers = getIds("updated-by"),
+    )
+
+    val fetchedTasks =
+      if (queryParams.isEmpty()) {
+        service.all()
+      } else {
+        service.allByQueryParams(taskQueryParams)
+      }
+    return ServerResponse.ok().bodyAndAwait(fetchedTasks.map(Task::toTaskResponse).asFlow())
   }
 
   suspend fun byId(request: ServerRequest): ServerResponse {
@@ -105,9 +149,45 @@ class TaskHandler(
     }.awaitSingle()
   }
 
+  // TODO: Move to proper file
+
+  // TODO: Move to proper file
+  private fun makeParams(params: MultiValueMap<String, String>): TaskQueryParamValues {
+    fun paramToUserIds(param: List<String>?): List<Long>? {
+      return param.orEmpty().stream().map(String::toLong).toList()
+    }
+
+    fun mapToLocalDate(dateStr: String): LocalDate {
+      val ymd = dateStr.split("-").stream().filter(String::isNotBlank).map(String::toInt).toList()
+
+      return if (ymd.size == 3) {
+        val (y, m, d) = ymd
+        LocalDate.of(y, m, d)
+//      } else if (ymd.isEmpty()) {
+//        null
+      } else {
+        throw IllegalArgumentException("[«field»] format should be [«date_pattern»]")
+      }
+    }
+
+    fun paramToLocalDates(param: List<String>?): List<LocalDate>? {
+      return param.orEmpty().stream().filter(String::isNotBlank).map(::mapToLocalDate).toList()
+    }
+
+    val taskQueryParams = TaskQueryParamValues(
+      dueDates = paramToLocalDates(params["due-date"]).orEmpty(),
+      statuses = params["status"].orEmpty().stream().map { enumValueOf<TaskStatus>(it) }.toList(),
+      createdByUsers = paramToUserIds(params["created-by"]).orEmpty(),
+      updatedByUsers = paramToUserIds(params["updated-by"]).orEmpty(),
+    )
+    println("params $taskQueryParams")
+    return taskQueryParams
+  }
+
   suspend fun allByUserId(request: ServerRequest): ServerResponse {
     val getRequestParam = getQueryParam(request)
 
+    makeParams(request.queryParams()).dueDates?.toFlux()
     // TODO: Refactor here
     val userId = request.pathVariable("userId").toLong()
     // TODO: Validate due-date date format -> It's 500 when invalid format right now
@@ -122,12 +202,18 @@ class TaskHandler(
     // TODO: Validate updated-by date format -> It's 500 when invalid format right now
     val updatedBy = getRequestParam("updated-by")
 
-    val ymd = dueDate.split("-").stream().filter { it.isNotBlank() }.map(String::toInt).toList()
+    val ymd = dueDate.split("-").stream().filter(String::isNotBlank).map(String::toInt).toList()
+    println("ymd $ymd")
     val dueDateLocalDate = if (ymd.size == 3) {
       val (y, m, d) = ymd
       LocalDate.of(y, m, d)
-    } else null
-    val conditions = TaskConditions(
+    } else if (ymd.isEmpty()) {
+      null
+    } else {
+      return ServerResponse.badRequest()
+        .bodyValueAndAwait(BadRequestResponse(mapOf("due-date" to "[due-date] format should be [YYYY-MM-dd]")))
+    }
+    val conditions = TaskQueryParams(
       dueDate = dueDateLocalDate,
       status = taskStatus,
 //      createdBy = createdBy?.toLong(),
@@ -140,8 +226,6 @@ class TaskHandler(
         ServerResponse.ok().body(service.allByUserId(userId, conditions).map { task ->
           task.toTaskWithUserResponse(user)
         })
-      }.switchIfEmpty {
-        ServerResponse.ok().body(Flux.empty<Task>())
-      }.awaitSingle()
+      }.switchIfEmpty { ServerResponse.ok().body(Flux.empty()) }.awaitSingle()
   }
 }

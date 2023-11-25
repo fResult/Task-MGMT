@@ -79,5 +79,4 @@ class TaskMgmtApplication(private val environment: Environment) {
 
 fun main(args: Array<String>) {
   runApplication<TaskMgmtApplication>(*args)
-
 }
