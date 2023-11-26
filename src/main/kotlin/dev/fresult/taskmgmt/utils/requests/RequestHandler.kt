@@ -14,8 +14,8 @@ fun getQueryParam(request: ServerRequest): (QueryParam) -> String? {
   }
 }
 
-fun getQueryParamValues(queryParams:  MultiValueMap<String, String>): (QueryParam) -> List<String>? {
+fun getQueryParamValues(queryParams:  MultiValueMap<String, String>): (QueryParam) -> List<String> {
   return { param ->
-    queryParams[param]
+    queryParams[param].orEmpty()
   }
 }

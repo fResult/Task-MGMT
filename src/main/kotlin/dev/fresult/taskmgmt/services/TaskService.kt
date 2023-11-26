@@ -1,19 +1,16 @@
 package dev.fresult.taskmgmt.services
 
 import dev.fresult.taskmgmt.dtos.TaskQueryParamValues
-import dev.fresult.taskmgmt.dtos.TaskQueryParams
 import dev.fresult.taskmgmt.entities.Task
+import dev.fresult.taskmgmt.entities.TaskStatus
 import dev.fresult.taskmgmt.repositories.TaskRepository
-import dev.fresult.taskmgmt.repositories.TaskRepositoryConcrete
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import java.time.LocalDate
 
 @Service
-class TaskService(
-  private val repository: TaskRepository,
-  private val repositoryConcrete: TaskRepositoryConcrete,
-) : BaseService<Task, Long> {
+class TaskService(private val repository: TaskRepository) : BaseService<Task, Long> {
   override fun all(): Flux<Task> = repository.findAll()
     /*.delayElements(Duration.ofMillis(300))*/
     // TODO: Remove log
@@ -41,23 +38,19 @@ class TaskService(
     return repository.deleteById(id)
   }
 
-  fun allByUserId(userId: Long, conditions: TaskQueryParams): Flux<Task> {
-    val (dueDate, status, createdBy, updatedBy) = conditions
+  fun allByQueryParams(queryParams: TaskQueryParamValues): Flux<Task> {
+    val (dueDates, statuses, createdBy, updatedBy) = queryParams
 
-    return repository.findAllByUserId(
-      userId,
-      dueDate,
-      status,
-      // FIXME: createdBy is redundant with userId
-//      createdBy,
-//      updatedBy,
+    return repository.findAllByConditions(
+      defaultFirstLong(createdBy),
+      defaultFirstLong(updatedBy),
+      defaultFirstItem(::firstItemLocalDate)(dueDates),
+      defaultFirstItem(::firstItemStatus)(statuses),
+      createdByIsNull = createdBy.isNullOrEmpty(),
+      updatedByIsNull = updatedBy.isNullOrEmpty(),
+      dueDatesIsNull = dueDates.isNullOrEmpty(),
+      statusesIsNull = statuses.isNullOrEmpty(),
     )
-      // TODO: Remove log
-      .doOnEach { println("Task by userId [$userId]: ${it.get()}") }
-  }
-
-  fun allByQueryParams(taskQueryParams: TaskQueryParamValues): Flux<Task> {
-    TODO("Not yet implemented")
   }
 
   val copyToUpdate: (Task) -> (Task) -> Task = { existingTask ->
@@ -71,4 +64,12 @@ class TaskService(
       )
     }
   }
-}
+
+    private val defaultFirstLong = defaultFirstItem(::firstItemLong)
+    private fun firstItemLong(): List<Long> = listOf(-1)
+    private fun firstItemLocalDate(): List<LocalDate> = listOf(LocalDate.now())
+    private fun firstItemStatus(): List<TaskStatus> = listOf(TaskStatus.PENDING)
+    private fun <T> defaultFirstItem(default: () -> List<T>): (List<T>?) -> List<T> = { list ->
+      list.orEmpty().ifEmpty(default)
+    }
+  }

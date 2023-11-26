@@ -14,7 +14,6 @@ class TaskRouter(private val handler: TaskHandler) {
     "/tasks".nest {
       GET("", handler::all)
       GET("/{id}", handler::byId)
-      GET("/users/{userId}", handler::allByUserId)
       POST("", handler::create)
       PUT("/{id}", handler::update)
       DELETE("/{id}", handler::deleteById)

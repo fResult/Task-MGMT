@@ -11,8 +11,8 @@ data class TaskQueryParams(
 )
 
 data class TaskQueryParamValues(
-  val dueDates: List<LocalDate> = listOf(),
-  val statuses: List<TaskStatus> = listOf(),
-  val createdByUsers: List<Long> = listOf(),
-  val updatedByUsers: List<Long> = listOf(),
+  val dueDates: List<LocalDate>?,
+  val statuses: List<TaskStatus>?,
+  val createdByUsers: List<Long>?,
+  val updatedByUsers: List<Long>?,
 )

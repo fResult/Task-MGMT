@@ -7,13 +7,14 @@
   - [Get All Users](#get-all-users)
   - [Get User by ID](#get-user-by-id)
   - [Update User](#update-user)
-  - [Change Password](#change-password)
+  - [Change Password](#change-password) (Not Available yet)
   - [Delete User](#delete-user)
 - [Task](#tasks)
   - [Create Task](#create-task)
-  - [Get All Tasks](#get-all-tasks)
+  - [Get All Tasks (with query params)](#get-all-tasks)
   - [Get Task By ID](#get-task-by-id)
   - [Update Task](#update-task)
+  - [Update Task Status](#update-task-status) (Not Available yet)
   - [Delete Task](#delete-task)
 
 ## Users

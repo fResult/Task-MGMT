@@ -1,7 +1,6 @@
 package dev.fresult.taskmgmt.handlers
 
 import dev.fresult.taskmgmt.dtos.TaskQueryParamValues
-import dev.fresult.taskmgmt.dtos.TaskQueryParams
 import dev.fresult.taskmgmt.dtos.TaskRequest
 import dev.fresult.taskmgmt.entities.Task
 import dev.fresult.taskmgmt.entities.TaskStatus
@@ -9,7 +8,6 @@ import dev.fresult.taskmgmt.entities.User
 import dev.fresult.taskmgmt.services.TaskService
 import dev.fresult.taskmgmt.services.UserService
 import dev.fresult.taskmgmt.utils.requests.getPathId
-import dev.fresult.taskmgmt.utils.requests.getQueryParam
 import dev.fresult.taskmgmt.utils.requests.getQueryParamValues
 import dev.fresult.taskmgmt.utils.responses.BadRequestResponse
 import dev.fresult.taskmgmt.utils.responses.responseNotFound
@@ -22,9 +20,8 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.util.MultiValueMap
 import org.springframework.web.reactive.function.server.*
-import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.switchIfEmpty
-import reactor.kotlin.core.publisher.toFlux
 import java.time.LocalDate
 
 @Component
@@ -38,45 +35,20 @@ class TaskHandler(
   suspend fun all(request: ServerRequest): ServerResponse {
     val queryParams = request.queryParams()
     val getRequestParamValues = getQueryParamValues(queryParams)
-    fun mapToLocalDate(dateStr: String): LocalDate {
-      val ymd = dateStr.split("-").stream().filter(String::isNotBlank).map(String::toInt).toList()
-
-      return if (ymd.size == 3) {
-        val (y, m, d) = ymd
-        LocalDate.of(y, m, d)
-      } else {
-        throw IllegalArgumentException("[«field»] format should be [«date_pattern»]")
-      }
-    }
-
-    fun toLocalDates(paramValues: List<String>?): List<LocalDate> {
-      return paramValues.orEmpty().stream().filter(String::isNotBlank).map(::mapToLocalDate).toList()
-    }
-
-    fun toStatuses(paramValues: List<String>?): List<TaskStatus> {
-      return paramValues.orEmpty().stream().map { enumValueOf<TaskStatus>(it) }.toList()
-    }
-
-    fun toLongs(paramValues: List<String>?): List<Long> {
-      return paramValues.orEmpty().stream().map(String::toLong).toList()
-    }
-
-    val getIds =  getRequestParamValues then ::toLongs
+    val getIdsFromQueryParams = getRequestParamValues then ::toLongs
 
     val taskQueryParams = TaskQueryParamValues(
       dueDates = (getRequestParamValues then ::toLocalDates)("due-date"),
       statuses = (getRequestParamValues then ::toStatuses)("status"),
-      createdByUsers = getIds("created-by"),
-      updatedByUsers = getIds("updated-by"),
+      createdByUsers = getIdsFromQueryParams("created-by"),
+      updatedByUsers = getIdsFromQueryParams("updated-by"),
     )
 
-    val fetchedTasks =
-      if (queryParams.isEmpty()) {
-        service.all()
-      } else {
-        service.allByQueryParams(taskQueryParams)
-      }
-    return ServerResponse.ok().bodyAndAwait(fetchedTasks.map(Task::toTaskResponse).asFlow())
+    val fetchedTask =
+      if (queryParams.isEmpty()) service.all()
+      else service.allByQueryParams(taskQueryParams)
+
+    return ServerResponse.ok().bodyAndAwait(fetchedTask.map(Task::toTaskResponse).asFlow())
   }
 
   suspend fun byId(request: ServerRequest): ServerResponse {
@@ -88,27 +60,20 @@ class TaskHandler(
   }
 
   suspend fun create(request: ServerRequest): ServerResponse {
-    return request.bodyToMono<TaskRequest>()
-      .flatMap { body ->
-        val violations = validator.validate(body)
+    return request.bodyToMono<TaskRequest>().flatMap { body ->
+      val violations = validator.validate(body)
 
-        if (violations.isEmpty()) {
-          userService.byId(body.userId).map(User::toUserResponse).flatMap { exisingUser ->
-            val taskToCreate = Task.fromTaskRequest(body)
-            val createdTask = service.create(taskToCreate)
-            ServerResponse.status(HttpStatus.CREATED).body(createdTask.map(Task::toTaskResponse))
-          }.switchIfEmpty {
-            val errorMessage = "User with ID [${body.userId}] does not exist"
-            println(errorMessage)
-//            val errorResponse = BadRequestResponse(mapOf(Pair("userId", errorMessage)))
-            val errorResponse = BadRequestResponse(mapOf("userId" to errorMessage))
-            ServerResponse.badRequest().bodyValue(errorResponse)
-          }
-        } else {
-          val errorResponse = BadRequestResponse(entryMapErrors(violations))
-          ServerResponse.badRequest().bodyValue(errorResponse)
-        }
-      }.awaitSingle()
+      if (violations.isEmpty()) {
+        userService.byId(body.userId).map(User::toUserResponse).flatMap { _userResp ->
+          val taskToCreate = Task.fromTaskRequest(body)
+          val createdTask = service.create(taskToCreate)
+          ServerResponse.status(HttpStatus.CREATED).body(createdTask.map(Task::toTaskResponse))
+        }.switchIfEmpty(userIdDoesNotExists(body.userId))
+      } else {
+        val errorResponse = BadRequestResponse(entryMapErrors(violations))
+        ServerResponse.badRequest().bodyValue(errorResponse)
+      }
+    }.awaitSingle()
   }
 
   suspend fun update(request: ServerRequest): ServerResponse {
@@ -121,9 +86,11 @@ class TaskHandler(
         val violations = validator.validate(body)
 
         if (violations.isEmpty()) {
-          val taskFromBody = Task.fromTaskRequest(body)
-          val taskToUpdate = service.copyToUpdate(existingTask)(taskFromBody)
-          ServerResponse.ok().body(service.update(id, taskToUpdate).map(Task::toTaskResponse))
+          userService.byId(body.userId).flatMap {
+            val taskFromBody = Task.fromTaskRequest(body)
+            val taskToUpdate = service.copyToUpdate(existingTask)(taskFromBody)
+            ServerResponse.ok().body(service.update(id, taskToUpdate).map(Task::toTaskResponse))
+          }.switchIfEmpty(userIdDoesNotExists(body.userId))
         } else {
 //          val errorResponse = entryMapErrors(violations).toMono().map { BadRequestResponse(it) }
           val errorResponse = BadRequestResponse(entryMapErrors(violations))
@@ -184,48 +151,36 @@ class TaskHandler(
     return taskQueryParams
   }
 
-  suspend fun allByUserId(request: ServerRequest): ServerResponse {
-    val getRequestParam = getQueryParam(request)
+  private fun userIdDoesNotExists(userId: Long): () -> Mono<ServerResponse> = {
+    val errorMessage = "User with ID [${userId}] does not exist"
+    println(errorMessage)
+    // val errorResponse = BadRequestResponse(mapOf(Pair("userId", errorMessage)))
+    val errorResponse = BadRequestResponse(mapOf("userId" to errorMessage))
+    ServerResponse.badRequest().bodyValue(errorResponse)
+  }
 
-    makeParams(request.queryParams()).dueDates?.toFlux()
-    // TODO: Refactor here
-    val userId = request.pathVariable("userId").toLong()
-    // TODO: Validate due-date date format -> It's 500 when invalid format right now
-    val dueDate = getRequestParam("due-date").orEmpty()
+  private fun mapToLocalDate(dateStr: String): LocalDate {
+    val ymd = dateStr.split("-").stream().filter(String::isNotBlank).map(String::toInt).toList()
 
-    val statusParam = request.queryParam("status")
-    val status = (if (statusParam.isPresent) statusParam.get() else TaskStatus.PENDING) as String
-    // TODO: Validate status -> It's 500 when invalid format right now
-    val taskStatus = enumValueOf<TaskStatus>(status)
-    // TODO: Validate created-by date format -> It's 500 when invalid format right now
-    val createdBy = getRequestParam("created-by")
-    // TODO: Validate updated-by date format -> It's 500 when invalid format right now
-    val updatedBy = getRequestParam("updated-by")
-
-    val ymd = dueDate.split("-").stream().filter(String::isNotBlank).map(String::toInt).toList()
-    println("ymd $ymd")
-    val dueDateLocalDate = if (ymd.size == 3) {
+    return if (ymd.size == 3) {
       val (y, m, d) = ymd
       LocalDate.of(y, m, d)
-    } else if (ymd.isEmpty()) {
-      null
     } else {
-      return ServerResponse.badRequest()
-        .bodyValueAndAwait(BadRequestResponse(mapOf("due-date" to "[due-date] format should be [YYYY-MM-dd]")))
+      throw IllegalArgumentException("[«field»] format should be [«date_pattern»]")
     }
-    val conditions = TaskQueryParams(
-      dueDate = dueDateLocalDate,
-      status = taskStatus,
-//      createdBy = createdBy?.toLong(),
-//      updatedBy = updatedBy?.toLong(),
-    )
-
-    return userService.byId(userId)
-      .map(User::toUserResponse)
-      .flatMap { user ->
-        ServerResponse.ok().body(service.allByUserId(userId, conditions).map { task ->
-          task.toTaskWithUserResponse(user)
-        })
-      }.switchIfEmpty { ServerResponse.ok().body(Flux.empty()) }.awaitSingle()
   }
+
+  private fun toLocalDates(paramValues: List<String>): List<LocalDate>? {
+    return paramValues.stream().filter(String::isNotBlank).map(::mapToLocalDate).toList().ifEmpty { null }
+  }
+
+  private fun toStatuses(paramValues: List<String>): List<TaskStatus>? {
+    return paramValues.stream().map { enumValueOf<TaskStatus>(it) }.toList().ifEmpty { null }
+  }
+
+  private fun toLongs(paramValues: List<String>): List<Long>? {
+    // return if (paramValues?.isNotEmpty()!!) paramValues.stream().map(String::toLong).toList() else null
+    return paramValues.stream().map(String::toLong).toList().ifEmpty { null }
+  }
+
 }

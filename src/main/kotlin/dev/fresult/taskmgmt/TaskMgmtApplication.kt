@@ -5,7 +5,6 @@ import dev.fresult.taskmgmt.entities.TaskStatus
 import dev.fresult.taskmgmt.entities.User
 import dev.fresult.taskmgmt.repositories.TaskRepository
 import dev.fresult.taskmgmt.repositories.UserRepository
-import kotlinx.coroutines.reactor.awaitSingle
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
