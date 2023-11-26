@@ -27,3 +27,11 @@ data class TaskRequest(
   @field:NotNull(message = "userId must not be empty")
   val userId: Long,
 )
+
+data class TaskStatusRequest(
+  @field:NotNull(message = "status must not be empty")
+  val status: TaskStatus,
+
+  @field:NotNull(message = "userId must not be empty")
+  val userId: Long,
+)

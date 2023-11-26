@@ -140,7 +140,7 @@ null
 null
 ```
 
-### Change Password
+### Change Password (Not Available yet)
 #### Description
 **Method:** PATCH\
 **Route:** `/users/:id/password` (e.g. `/users/1/password`)

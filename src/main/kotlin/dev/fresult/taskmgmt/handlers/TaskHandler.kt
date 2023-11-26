@@ -2,6 +2,7 @@ package dev.fresult.taskmgmt.handlers
 
 import dev.fresult.taskmgmt.dtos.TaskQueryParamValues
 import dev.fresult.taskmgmt.dtos.TaskRequest
+import dev.fresult.taskmgmt.dtos.TaskStatusRequest
 import dev.fresult.taskmgmt.entities.Task
 import dev.fresult.taskmgmt.entities.User
 import dev.fresult.taskmgmt.services.TaskService
@@ -102,6 +103,25 @@ class TaskHandler(
     } catch (ex: NoSuchElementException) {
       taskRespNotFound(id).awaitSingle()
     }
+  }
+
+  suspend fun updateStatus(request: ServerRequest): ServerResponse {
+    val id = getPathId(request)
+
+      return request.bodyToMono<TaskStatusRequest>().flatMap { body ->
+        val violations = validator.validate(body)
+        if (violations.isEmpty()) {
+          service.byId(id).flatMap { existingTask ->
+            // val taskToUpdate = service.copyToUpdate(existingTask)(body)
+            val taskToUpdate = existingTask.copy(status = body.status, updatedBy = body.userId)
+            println("taskToUpdate $taskToUpdate")
+            ServerResponse.ok().body(service.update(id, taskToUpdate).map(Task::toTaskResponse))
+          }.switchIfEmpty { taskRespNotFound(id) }
+        } else {
+          val errorResponse = BadRequestResponse(entryMapErrors(violations))
+          ServerResponse.badRequest().bodyValue(errorResponse)
+        }
+      }.awaitSingle()
   }
 
   suspend fun deleteById(request: ServerRequest): ServerResponse {

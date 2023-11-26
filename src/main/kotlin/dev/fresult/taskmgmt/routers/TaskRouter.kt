@@ -16,6 +16,7 @@ class TaskRouter(private val handler: TaskHandler) {
       GET("/{id}", handler::byId)
       POST("", handler::create)
       PUT("/{id}", handler::update)
+      PATCH("/{id}", handler::updateStatus)
       DELETE("/{id}", handler::deleteById)
     }
   }
