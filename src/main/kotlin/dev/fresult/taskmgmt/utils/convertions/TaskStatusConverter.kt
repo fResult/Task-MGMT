@@ -1,4 +1,4 @@
-package dev.fresult.taskmgmt.utils.converters
+package dev.fresult.taskmgmt.utils.convertions
 
 import dev.fresult.taskmgmt.entities.TaskStatus
 import org.springframework.core.convert.converter.Converter

@@ -3,10 +3,12 @@ package dev.fresult.taskmgmt.handlers
 import dev.fresult.taskmgmt.dtos.TaskQueryParamValues
 import dev.fresult.taskmgmt.dtos.TaskRequest
 import dev.fresult.taskmgmt.entities.Task
-import dev.fresult.taskmgmt.entities.TaskStatus
 import dev.fresult.taskmgmt.entities.User
 import dev.fresult.taskmgmt.services.TaskService
 import dev.fresult.taskmgmt.services.UserService
+import dev.fresult.taskmgmt.utils.convertions.toLocalDates
+import dev.fresult.taskmgmt.utils.convertions.toLongs
+import dev.fresult.taskmgmt.utils.convertions.toStatuses
 import dev.fresult.taskmgmt.utils.requests.getPathId
 import dev.fresult.taskmgmt.utils.requests.getQueryParamValues
 import dev.fresult.taskmgmt.utils.responses.BadRequestResponse
@@ -18,11 +20,9 @@ import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
-import org.springframework.util.MultiValueMap
 import org.springframework.web.reactive.function.server.*
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.switchIfEmpty
-import java.time.LocalDate
 
 @Component
 class TaskHandler(
@@ -116,41 +116,6 @@ class TaskHandler(
     }.awaitSingle()
   }
 
-  // TODO: Move to proper file
-
-  // TODO: Move to proper file
-  private fun makeParams(params: MultiValueMap<String, String>): TaskQueryParamValues {
-    fun paramToUserIds(param: List<String>?): List<Long>? {
-      return param.orEmpty().stream().map(String::toLong).toList()
-    }
-
-    fun mapToLocalDate(dateStr: String): LocalDate {
-      val ymd = dateStr.split("-").stream().filter(String::isNotBlank).map(String::toInt).toList()
-
-      return if (ymd.size == 3) {
-        val (y, m, d) = ymd
-        LocalDate.of(y, m, d)
-//      } else if (ymd.isEmpty()) {
-//        null
-      } else {
-        throw IllegalArgumentException("[«field»] format should be [«date_pattern»]")
-      }
-    }
-
-    fun paramToLocalDates(param: List<String>?): List<LocalDate>? {
-      return param.orEmpty().stream().filter(String::isNotBlank).map(::mapToLocalDate).toList()
-    }
-
-    val taskQueryParams = TaskQueryParamValues(
-      dueDates = paramToLocalDates(params["due-date"]).orEmpty(),
-      statuses = params["status"].orEmpty().stream().map { enumValueOf<TaskStatus>(it) }.toList(),
-      createdByUsers = paramToUserIds(params["created-by"]).orEmpty(),
-      updatedByUsers = paramToUserIds(params["updated-by"]).orEmpty(),
-    )
-    println("params $taskQueryParams")
-    return taskQueryParams
-  }
-
   private fun userIdDoesNotExists(userId: Long): () -> Mono<ServerResponse> = {
     val errorMessage = "User with ID [${userId}] does not exist"
     println(errorMessage)
@@ -158,29 +123,4 @@ class TaskHandler(
     val errorResponse = BadRequestResponse(mapOf("userId" to errorMessage))
     ServerResponse.badRequest().bodyValue(errorResponse)
   }
-
-  private fun mapToLocalDate(dateStr: String): LocalDate {
-    val ymd = dateStr.split("-").stream().filter(String::isNotBlank).map(String::toInt).toList()
-
-    return if (ymd.size == 3) {
-      val (y, m, d) = ymd
-      LocalDate.of(y, m, d)
-    } else {
-      throw IllegalArgumentException("[«field»] format should be [«date_pattern»]")
-    }
-  }
-
-  private fun toLocalDates(paramValues: List<String>): List<LocalDate>? {
-    return paramValues.stream().filter(String::isNotBlank).map(::mapToLocalDate).toList().ifEmpty { null }
-  }
-
-  private fun toStatuses(paramValues: List<String>): List<TaskStatus>? {
-    return paramValues.stream().map { enumValueOf<TaskStatus>(it) }.toList().ifEmpty { null }
-  }
-
-  private fun toLongs(paramValues: List<String>): List<Long>? {
-    // return if (paramValues?.isNotEmpty()!!) paramValues.stream().map(String::toLong).toList() else null
-    return paramValues.stream().map(String::toLong).toList().ifEmpty { null }
-  }
-
 }

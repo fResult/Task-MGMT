@@ -65,11 +65,12 @@ class TaskService(private val repository: TaskRepository) : BaseService<Task, Lo
     }
   }
 
-    private val defaultFirstLong = defaultFirstItem(::firstItemLong)
-    private fun firstItemLong(): List<Long> = listOf(-1)
-    private fun firstItemLocalDate(): List<LocalDate> = listOf(LocalDate.now())
-    private fun firstItemStatus(): List<TaskStatus> = listOf(TaskStatus.PENDING)
-    private fun <T> defaultFirstItem(default: () -> List<T>): (List<T>?) -> List<T> = { list ->
-      list.orEmpty().ifEmpty(default)
-    }
+  private fun <T> defaultFirstItem(default: () -> List<T>): (List<T>?) -> List<T> = { list ->
+    list.orEmpty().ifEmpty(default)
   }
+
+  private fun firstItemLong(): List<Long> = listOf(-1)
+  private val defaultFirstLong = defaultFirstItem(::firstItemLong)
+  private fun firstItemLocalDate(): List<LocalDate> = listOf(LocalDate.now())
+  private fun firstItemStatus(): List<TaskStatus> = listOf(TaskStatus.PENDING)
+}
