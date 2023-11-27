@@ -7,7 +7,10 @@
 5. Docker (and Docker Compose)
 
 ## API Documentation
-See [API_DOC.md](/API_DOC.md)
+See [API_DOC.md](/apidoc/API_DOC.md) and [Task MGMT API | Postman](/apidoc/api-doc.json)
+> **Note:**\
+> Import _Task MGMT API_ on Postman\
+> and setup environment variable `base-url` = `http://«hostname»/«port»` (e.g. `http://localhost:8080`)
 
 ## Scripts
 **Prepare**
@@ -50,7 +53,8 @@ docker-compose -f docker/compose.dev.yml up --build -d
 ## TODO
 - [x] Validate body request to response 400 Bad Request
 - [x] Create DTO for Tasks by UserId
+- [x] Create GET `/tasks` API route to retrieve tasks that match specific due dates, statuses, or created/updated users.
 - [ ] Make `status` accept only possible 3 values in enum
-- [ ] Make `/tasks/users/:userId` able to retrieve tasks by specific `due dates`, `statuses`, or `created/updated users`.
-- [ ] Do authentication for most of API routes
 - [ ] Hash Password
+- [ ] Do authorization for most of API routes
+- [ ] Make `createdBy` and `updatedBy` refer to authentication (token) automatic update by data auditing

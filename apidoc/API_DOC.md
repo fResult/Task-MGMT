@@ -1,7 +1,8 @@
 # API Usages Documentation
+[Task MGMT API | Postman](api-doc.json).\
+Set environment `base-url` = `http://«hostname»:«port»` (e.g. `http://localhost:8080`)
 
 ## Table of Content
-
 - [Users](#users)
   - [Create User](#create-user)
   - [Get All Users](#get-all-users)
@@ -54,8 +55,8 @@
 #### Description
 **Method:** GET\
 **Route:** `/users`
-**Success Case:** 200 OK
 #### Response Body
+**Success Case:** 200 OK
 ```json
 [
   {
@@ -207,7 +208,7 @@ null
 **description:** String (Optional)\
 **dueDate:** `YYYY-MM-dd` or `YYYY-MM-ddTHH:mm:ss.SSSZ` (e.g. `2024-10-31`, or `2024-10-31T10:26:13.441Z`)\
 **status:** TaskStatus (e.g. `PENDING`, `IN_PROGRESS`, or `COMPLETED`)\
-**userId:** Integer (e.g. `1`, `2`, or `3`)
+**userId:** Integer (e.g. `1`, `2`, or `3`), _this will affect to `createdBy` and `updatedBy`_
 ```json
 {
   "title": "Task Title",
@@ -328,7 +329,7 @@ null
 **description:** String (Optional)\
 **dueDate:** `YYYY-MM-dd` or `YYYY-MM-ddTHH:mm:ss.SSSZ` (e.g. `2024-10-31`, or `2024-10-31T10:26:13.441Z`)\
 **status:** TaskStatus (e.g. `PENDING`, `IN_PROGRESS`, or `COMPLETED`)\
-**userId:** Integer (e.g. `1`, `2`, or `3`)
+**userId:** Integer (e.g. `1`, `2`, or `3`), _this will affect to `updatedBy`_
 ```json
 {
   "title": "Task 1",
@@ -367,9 +368,11 @@ null
 
 #### Request Body
 **status:** TaskStatus (e.g. `PENDING`, `IN_PROGRESS`, or `COMPLETED`)\
+**userId:** Integer (e.g. `1`, `2`, or `3`), _this will affect to `createdBy` and `updatedBy`_
 ```json
 {
-  "status": "IN_PROGRESS"
+  "status": "IN_PROGRESS",
+  "userId": 2
 }
 ```
 
