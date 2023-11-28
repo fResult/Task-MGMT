@@ -18,6 +18,7 @@ import dev.fresult.taskmgmt.utils.validations.entryMapErrors
 import jakarta.validation.Validator
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactor.awaitSingle
+import org.apache.logging.log4j.LogManager
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.*
@@ -30,6 +31,7 @@ class TaskHandler(
   private val userService: UserService,
   private val validator: Validator,
 ) {
+  private val log = LogManager.getLogger(TaskHandler::class)
   private val taskRespNotFound = responseNotFound(Task::class)
 
   suspend fun all(request: ServerRequest): ServerResponse {
@@ -147,16 +149,16 @@ class TaskHandler(
     return service.deleteById(id).flatMap {
       noContentResponse
     }.switchIfEmpty {
-      println("Task with ID $id does not exist")
+      log.info("Task with ID {} does not exist", id)
       noContentResponse
     }.awaitSingle()
   }
 
   private fun userIdDoesNotExists(userId: Long): () -> Mono<ServerResponse> = {
-    val errorMessage = "User with ID [${userId}] does not exist"
+    val errorMessage = "User with ID [{}] does not exist"
     // val badRequestResp = BadRequestResponse(mapOf(Pair("userId", errorMessage)))
-    val badRequestResp = BadRequestResponse(mapOf("userId" to errorMessage))
-    println(errorMessage)
+    val badRequestResp = BadRequestResponse(mapOf("userId" to errorMessage.replace("{}", userId.toString())))
+    log.error(errorMessage, userId)
     ServerResponse.badRequest().bodyValue(badRequestResp)
   }
 }

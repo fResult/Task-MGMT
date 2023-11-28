@@ -70,7 +70,7 @@ class TaskMgmtApplication(private val environment: Environment) {
   var log: Logger = LogManager.getLogger()
 
   fun printCreateErrorMessage(clazz: KClass<*>) =
-    { throwable: Throwable -> log.error("[Create ${clazz.simpleName}] :: ${throwable.cause?.message}") }
+    { throwable: Throwable -> log.error("[Create {}] :: {}", clazz.simpleName, throwable.cause?.message) }
 
   @Autowired
   lateinit var taskRepo: TaskRepository

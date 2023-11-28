@@ -13,6 +13,7 @@ import dev.fresult.taskmgmt.utils.validations.entryMapErrors
 import jakarta.validation.Validator
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactor.awaitSingle
+import org.apache.logging.log4j.LogManager
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.*
@@ -21,6 +22,8 @@ import reactor.kotlin.core.publisher.switchIfEmpty
 
 @Component
 class UserHandler(private val service: UserService, private val validator: Validator) {
+  private val log = LogManager.getLogger(UserHandler::class)
+
   private val userResponseNotFound = responseNotFound(User::class)
 
   suspend fun all(request: ServerRequest) =
@@ -57,7 +60,7 @@ class UserHandler(private val service: UserService, private val validator: Valid
     return service.deleteById(id)
       .flatMap { ServerResponse.noContent().build() }
       .switchIfEmpty {
-        println("User with ID $id does not exist")
+        log.info("User with ID {} does not exist", id)
         ServerResponse.noContent().build()
       }.awaitSingle()
   }
