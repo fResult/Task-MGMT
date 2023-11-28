@@ -9,8 +9,9 @@ import kotlin.reflect.KClass
 
 typealias Id = Long
 
-fun responseNotFound(clazz: KClass<*>): (Id) -> Mono<ServerResponse> {
-  val log = LogManager.getLogger()
+fun responseNotFound(clazz: KClass<*>, logClass: KClass<*>): (Id) -> Mono<ServerResponse> {
+  val log = LogManager.getLogger(logClass.java)
+
   return { id ->
     val errorMessage = "[${clazz.simpleName}] with ID [{}] does not exist"
     val badRequestResp = BadRequestResponse(mapOf("message" to errorMessage.replace("{}", id.toString())))

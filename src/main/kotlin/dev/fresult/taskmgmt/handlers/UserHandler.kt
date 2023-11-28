@@ -22,9 +22,9 @@ import reactor.kotlin.core.publisher.switchIfEmpty
 
 @Component
 class UserHandler(private val service: UserService, private val validator: Validator) {
-  private val log = LogManager.getLogger(UserHandler::class)
+  private val log = LogManager.getLogger(UserHandler::class.java)
 
-  private val userResponseNotFound = responseNotFound(User::class)
+  private val userResponseNotFound = responseNotFound(User::class, UserHandler::class)
 
   suspend fun all(request: ServerRequest) =
     ServerResponse.ok().bodyAndAwait(service.all().map(User::toUserResponse).asFlow())

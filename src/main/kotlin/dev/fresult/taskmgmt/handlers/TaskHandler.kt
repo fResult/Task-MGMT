@@ -31,8 +31,8 @@ class TaskHandler(
   private val userService: UserService,
   private val validator: Validator,
 ) {
-  private val log = LogManager.getLogger(TaskHandler::class)
-  private val taskRespNotFound = responseNotFound(Task::class)
+  private val log = LogManager.getLogger(TaskHandler::class.java)
+  private val taskRespNotFound = responseNotFound(Task::class, TaskHandler::class)
 
   suspend fun all(request: ServerRequest): ServerResponse {
     val queryParams = request.queryParams()

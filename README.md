@@ -55,6 +55,9 @@ docker-compose -f docker/compose.dev.yml up --build -d
 - [x] Create DTO for Tasks by UserId
 - [x] Create GET `/tasks` API route to retrieve tasks that match specific due dates, statuses, or created/updated users.
 - [ ] Create API Document with Open API or Swagger
+- [ ] Add the source method in the Logger to (right now we know only source class)
+    - **Actual Result   -** 2023-11-28T15:35:56.540+07:00 ERROR 39490 --- [actor-tcp-nio-2] d.fresult.taskmgmt.handlers.UserHandler [«METHOD_NAME»]  : [User] with ID [222] does not exist)
+    - **Expected Result -** 2023-11-28T15:35:56.540+07:00 ERROR 39490 --- [actor-tcp-nio-2] d.fresult.taskmgmt.handlers.UserHandler [byId]  : [User] with ID [222] does not exist)
 - [ ] Make `status` accept only possible 3 values in enum
 - [ ] Hash Password
 - [ ] Do authorization for most of API routes
