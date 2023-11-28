@@ -5,6 +5,7 @@ import dev.fresult.taskmgmt.repositories.UserRepository
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import reactor.kotlin.core.publisher.switchIfEmpty
 
 @Service
 class UserService(private val repository: UserRepository) : BaseService<User, Long> {
@@ -18,9 +19,15 @@ class UserService(private val repository: UserRepository) : BaseService<User, Lo
     // TODO: Remove log
     .doOnEach { println("created: ${it.get()}") }
 
-  override fun update(id: Long, user: User): Mono<User> = repository.save(user)
-    // TODO: Remove log
-    .doOnEach { println("updated: ${it.get()}") }
+  override fun update(id: Long): (User) -> Mono<User> = { user ->
+    byId(id).flatMap {existingUser ->
+      val userToUpdate = copy(existingUser)(user)
+
+      repository.save(userToUpdate)
+        // TODO: Remove log
+        .doOnEach { println("updated: ${it.get()}") }
+    }
+  }
 
   override fun deleteById(id: Long): Mono<Void> = repository.deleteById(id)
 
@@ -33,6 +40,7 @@ class UserService(private val repository: UserRepository) : BaseService<User, Lo
         version = existingUser.version,
         createdAt = existingUser.createdAt,
         updatedAt = existingUser.updatedAt,
+        password = existingUser.password
       )
     }
   }

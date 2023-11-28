@@ -1,17 +1,23 @@
 package dev.fresult.taskmgmt.handlers
 
+import dev.fresult.taskmgmt.dtos.CreateUserRequest
+import dev.fresult.taskmgmt.dtos.UpdateUserRequest
+import dev.fresult.taskmgmt.dtos.UserResponse
 import dev.fresult.taskmgmt.entities.User
 import dev.fresult.taskmgmt.services.UserService
 import dev.fresult.taskmgmt.utils.requests.getPathId
 import dev.fresult.taskmgmt.utils.responses.BadRequestResponse
 import dev.fresult.taskmgmt.utils.responses.responseNotFound
+import dev.fresult.taskmgmt.utils.then
 import dev.fresult.taskmgmt.utils.validations.entryMapErrors
 import jakarta.validation.Validator
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactor.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.*
+import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.switchIfEmpty
 
 @Component
@@ -30,40 +36,14 @@ class UserHandler(private val service: UserService, private val validator: Valid
   }
 
   suspend fun create(request: ServerRequest): ServerResponse {
-    return request.bodyToMono(User::class.java)
-      .flatMap { body ->
-        val violations = validator.validate(body)
-
-        if (violations.isEmpty()) {
-          ServerResponse.status(HttpStatus.CREATED).body(service.create(body).map(User::toUserResponse))
-        } else {
-          val errorResponse = BadRequestResponse(entryMapErrors(violations))
-          ServerResponse.badRequest().bodyValue(errorResponse)
-        }
-      }.awaitSingle()
+    return request.bodyToMono(CreateUserRequest::class.java)
+      .flatMap(::doCreate).awaitSingle()
   }
 
   suspend fun update(request: ServerRequest): ServerResponse {
     val id = getPathId(request)
-
-    return try {
-      val exitingUser = service.byId(id).awaitSingle()
-      val updatedUserMono = request.bodyToMono<User>().flatMap { body ->
-        val violations = validator.validate(body)
-
-        if (violations.isEmpty()) {
-          val userToUpdate = service.copy(exitingUser)(body)
-          ServerResponse.ok().body(service.update(id, userToUpdate).map(User::toUserResponse))
-        } else {
-          val errorResponse = BadRequestResponse(entryMapErrors(violations))
-          ServerResponse.badRequest().bodyValue(errorResponse)
-        }
-      }
-
-      updatedUserMono.awaitSingle()
-    } catch (ex: NoSuchElementException) {
-      userResponseNotFound(id).awaitSingle()
-    }
+    return request.bodyToMono<UpdateUserRequest>()
+      .flatMap(doUpdate(id)).awaitSingle()
   }
 
   suspend fun deleteById(request: ServerRequest): ServerResponse {
@@ -75,5 +55,38 @@ class UserHandler(private val service: UserService, private val validator: Valid
       println("User with ID $id does not exist")
       ServerResponse.noContent().build()
     }.awaitSingle()
+  }
+
+  private fun doCreate(body: CreateUserRequest): Mono<ServerResponse> {
+    val violations = validator.validate(body)
+
+    return if (violations.isEmpty()) {
+      fun bodyToUser(body: CreateUserRequest) = User.fromCreateUserRequest(body)
+      fun createUserAndMapResp(user: User) = service.create(user).map(User::toUserResponse)
+      val createUserResponse = ::bodyToUser then ::createUserAndMapResp
+      ServerResponse.status(HttpStatus.CREATED).body(createUserResponse(body))
+    } else {
+      val errorResponse = BadRequestResponse(entryMapErrors(violations))
+      ServerResponse.badRequest().bodyValue(errorResponse)
+    }
+  }
+
+  private fun doUpdate(id: Long) = { body: UpdateUserRequest ->
+    val violations = validator.validate(body)
+    if (violations.isEmpty()) {
+      fun bodyToUser(body: UpdateUserRequest) = User.fromUpdateUserRequest(body)
+      fun updateUserAndMapResp(id: Long) = { user: User ->
+        service.update(id)(user)
+          .map(User::toUserResponse)
+      }
+
+      val updateUserResponse = ::bodyToUser then updateUserAndMapResp(id)
+      updateUserResponse(body)
+        .flatMap { ServerResponse.ok().bodyValue(it) }
+        .switchIfEmpty { userResponseNotFound(id) }
+    } else {
+      val errorResponse = BadRequestResponse(entryMapErrors(violations))
+      ServerResponse.badRequest().bodyValue(errorResponse)
+    }
   }
 }

@@ -1,5 +1,7 @@
 package dev.fresult.taskmgmt.entities
 
+import dev.fresult.taskmgmt.dtos.CreateUserRequest
+import dev.fresult.taskmgmt.dtos.UpdateUserRequest
 import dev.fresult.taskmgmt.dtos.UserResponse
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
@@ -15,20 +17,11 @@ import java.time.Instant
 data class User(
   @Id override val id: Long? = null,
 
-  @field:Email(message = "email format must be correct (eg. email@example.com)")
   val email: String,
 
   // TODO: Hash Password
-  @field:NotBlank(message = "password must not be empty")
-  @field:Size(min = 6, message = "password must be [6] characters or more")
-  val password: String,
-
-  @field:NotBlank(message = "firstName must not be empty")
-  @field:Size(min = 2, message = "firstName must be [2] characters or more")
+  val password: String? = null,
   val firstName: String,
-
-  @field:NotBlank(message = "lastName must not be empty")
-  @field:Size(min = 2, message = "lastName must be [2] characters or more")
   val lastName: String,
 
   @CreatedDate
@@ -41,6 +34,21 @@ data class User(
   @Version
   override val version: Int? = null,
 ) : BaseEntity(id) {
+  companion object {
+    fun fromCreateUserRequest(body: CreateUserRequest): User = User(
+      email = body.email,
+      password = body.password,
+      firstName = body.firstName,
+      lastName = body.lastName,
+    )
+
+    fun fromUpdateUserRequest(body: UpdateUserRequest): User = User(
+      email = body.email,
+      firstName = body.firstName,
+      lastName = body.lastName,
+    )
+  }
+
   fun toUserResponse(): UserResponse = UserResponse(
     id = id!!,
     email = email,

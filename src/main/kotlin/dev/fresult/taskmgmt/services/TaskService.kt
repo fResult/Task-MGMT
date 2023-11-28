@@ -26,51 +26,51 @@ class TaskService(private val repository: TaskRepository) : BaseService<Task, Lo
       .doOnEach { println("created: ${it.get()}") }
   }
 
-  override fun update(id: Long, task: Task): Mono<Task> {
+  override fun update(id: Long) = { task: Task ->
     println("toUpdated $task")
 
-    return repository.save(task)
+    repository.save(task)
       // TODO: Remove log
       .doOnEach { println("updated: ${it.get()}") }
   }
 
-  override fun deleteById(id: Long): Mono<Void> {
-    return repository.deleteById(id)
-  }
+override fun deleteById(id: Long): Mono<Void> {
+  return repository.deleteById(id)
+}
 
-  fun allByQueryParams(queryParams: TaskQueryParamValues): Flux<Task> {
-    val (dueDates, statuses, createdBy, updatedBy) = queryParams
+fun allByQueryParams(queryParams: TaskQueryParamValues): Flux<Task> {
+  val (dueDates, statuses, createdBy, updatedBy) = queryParams
 
-    return repository.findAllByConditions(
-      defaultFirstLong(createdBy),
-      defaultFirstLong(updatedBy),
-      defaultFirstItem(::firstItemLocalDate)(dueDates),
-      defaultFirstItem(::firstItemStatus)(statuses),
-      createdByIsNull = createdBy.isNullOrEmpty(),
-      updatedByIsNull = updatedBy.isNullOrEmpty(),
-      dueDatesIsNull = dueDates.isNullOrEmpty(),
-      statusesIsNull = statuses.isNullOrEmpty(),
+  return repository.findAllByConditions(
+    defaultFirstLong(createdBy),
+    defaultFirstLong(updatedBy),
+    defaultFirstItem(::firstItemLocalDate)(dueDates),
+    defaultFirstItem(::firstItemStatus)(statuses),
+    createdByIsNull = createdBy.isNullOrEmpty(),
+    updatedByIsNull = updatedBy.isNullOrEmpty(),
+    dueDatesIsNull = dueDates.isNullOrEmpty(),
+    statusesIsNull = statuses.isNullOrEmpty(),
+  )
+}
+
+val copyToUpdate: (Task) -> (Task) -> Task = { existingTask ->
+  { task ->
+    task.copy(
+      id = existingTask.id,
+      version = existingTask.version,
+      createdAt = existingTask.createdAt,
+      updatedAt = existingTask.updatedAt,
+      createdBy = existingTask.createdBy
     )
   }
+}
 
-  val copyToUpdate: (Task) -> (Task) -> Task = { existingTask ->
-    { task ->
-      task.copy(
-        id = existingTask.id,
-        version = existingTask.version,
-        createdAt = existingTask.createdAt,
-        updatedAt = existingTask.updatedAt,
-        createdBy = existingTask.createdBy
-      )
-    }
-  }
+private fun <T> defaultFirstItem(default: () -> List<T>): (List<T>?) -> List<T> = { list ->
+  list.orEmpty().ifEmpty(default)
+}
 
-  private fun <T> defaultFirstItem(default: () -> List<T>): (List<T>?) -> List<T> = { list ->
-    list.orEmpty().ifEmpty(default)
-  }
-
-  private fun firstItemLong(): List<Long> = listOf(-1)
-  private val defaultFirstLong = defaultFirstItem(::firstItemLong)
-  private fun firstItemLocalDate(): List<LocalDate> = listOf(LocalDate.now())
-  private fun firstItemStatus(): List<TaskStatus> = listOf(TaskStatus.PENDING)
+private fun firstItemLong(): List<Long> = listOf(-1)
+private val defaultFirstLong = defaultFirstItem(::firstItemLong)
+private fun firstItemLocalDate(): List<LocalDate> = listOf(LocalDate.now())
+private fun firstItemStatus(): List<TaskStatus> = listOf(TaskStatus.PENDING)
 }
