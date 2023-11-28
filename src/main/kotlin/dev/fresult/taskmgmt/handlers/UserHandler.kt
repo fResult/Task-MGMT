@@ -2,7 +2,7 @@ package dev.fresult.taskmgmt.handlers
 
 import dev.fresult.taskmgmt.dtos.CreateUserRequest
 import dev.fresult.taskmgmt.dtos.UpdateUserRequest
-import dev.fresult.taskmgmt.dtos.UserResponse
+import dev.fresult.taskmgmt.dtos.UserPasswordRequest
 import dev.fresult.taskmgmt.entities.User
 import dev.fresult.taskmgmt.services.UserService
 import dev.fresult.taskmgmt.utils.requests.getPathId
@@ -13,7 +13,6 @@ import dev.fresult.taskmgmt.utils.validations.entryMapErrors
 import jakarta.validation.Validator
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactor.awaitSingle
-import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.*
@@ -30,9 +29,9 @@ class UserHandler(private val service: UserService, private val validator: Valid
   suspend fun byId(request: ServerRequest): ServerResponse {
     val id = getPathId(request)
 
-    return service.byId(id).flatMap {
-      ServerResponse.ok().bodyValue(it.toUserResponse())
-    }.switchIfEmpty { userResponseNotFound(id) }.awaitSingle()
+    return service.byId(id)
+      .flatMap { ServerResponse.ok().bodyValue(it.toUserResponse()) }
+      .switchIfEmpty { userResponseNotFound(id) }.awaitSingle()
   }
 
   suspend fun create(request: ServerRequest): ServerResponse {
@@ -46,15 +45,21 @@ class UserHandler(private val service: UserService, private val validator: Valid
       .flatMap(doUpdate(id)).awaitSingle()
   }
 
+  suspend fun changePassword(request: ServerRequest): ServerResponse {
+    val id = getPathId(request)
+    return request.bodyToMono<UserPasswordRequest>()
+      .flatMap(doChangePassword(id)).awaitSingle()
+  }
+
   suspend fun deleteById(request: ServerRequest): ServerResponse {
     val id = getPathId(request)
 
-    return service.deleteById(id).flatMap {
-      ServerResponse.noContent().build()
-    }.switchIfEmpty {
-      println("User with ID $id does not exist")
-      ServerResponse.noContent().build()
-    }.awaitSingle()
+    return service.deleteById(id)
+      .flatMap { ServerResponse.noContent().build() }
+      .switchIfEmpty {
+        println("User with ID $id does not exist")
+        ServerResponse.noContent().build()
+      }.awaitSingle()
   }
 
   private fun doCreate(body: CreateUserRequest): Mono<ServerResponse> {
@@ -66,8 +71,8 @@ class UserHandler(private val service: UserService, private val validator: Valid
       val createUserResponse = ::bodyToUser then ::createUserAndMapResp
       ServerResponse.status(HttpStatus.CREATED).body(createUserResponse(body))
     } else {
-      val errorResponse = BadRequestResponse(entryMapErrors(violations))
-      ServerResponse.badRequest().bodyValue(errorResponse)
+      val badRequestResp = BadRequestResponse(entryMapErrors(violations))
+      ServerResponse.badRequest().bodyValue(badRequestResp)
     }
   }
 
@@ -85,8 +90,23 @@ class UserHandler(private val service: UserService, private val validator: Valid
         .flatMap { ServerResponse.ok().bodyValue(it) }
         .switchIfEmpty { userResponseNotFound(id) }
     } else {
-      val errorResponse = BadRequestResponse(entryMapErrors(violations))
-      ServerResponse.badRequest().bodyValue(errorResponse)
+      val badRequestResp = BadRequestResponse(entryMapErrors(violations))
+      ServerResponse.badRequest().bodyValue(badRequestResp)
+    }
+  }
+
+  private fun doChangePassword(id: Long): (UserPasswordRequest) -> Mono<ServerResponse> = { body ->
+    val violations = validator.validate(body)
+    if (violations.isEmpty()) {
+      service.byId(id).flatMap { _ ->
+        val userFromBody = User.fromChangePasswordRequest(body)
+        service.changePassword(id)(userFromBody)
+      }.flatMap {
+        ServerResponse.ok().bodyValue("Changed Password Successfully")
+      }.switchIfEmpty(userResponseNotFound(id))
+    } else {
+      val badRequestResp = BadRequestResponse(entryMapErrors(violations))
+      ServerResponse.badRequest().bodyValue(badRequestResp)
     }
   }
 }

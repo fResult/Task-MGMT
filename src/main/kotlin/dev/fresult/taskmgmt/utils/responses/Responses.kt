@@ -1,5 +1,7 @@
 package dev.fresult.taskmgmt.utils.responses
 
+import dev.fresult.taskmgmt.utils.validations.entryMapErrors
+import org.springframework.http.HttpStatus
 import org.springframework.web.reactive.function.server.ServerResponse
 import reactor.core.publisher.Mono
 import kotlin.reflect.KClass
@@ -8,7 +10,9 @@ typealias Id = Long
 
 fun responseNotFound(clazz: KClass<*>): (Id) -> Mono<ServerResponse> {
   return { id ->
-    println("[${clazz.simpleName}] with ID [$id] does not exist")
-    ServerResponse.notFound().build()
+    val errorMessage = "[${clazz.simpleName}] with ID [$id] does not exist"
+    val badRequestResp = BadRequestResponse(mapOf("message" to errorMessage))
+    println(errorMessage)
+    ServerResponse.status(HttpStatus.NOT_FOUND).bodyValue(badRequestResp)
   }
 }

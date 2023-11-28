@@ -2,10 +2,8 @@ package dev.fresult.taskmgmt.entities
 
 import dev.fresult.taskmgmt.dtos.CreateUserRequest
 import dev.fresult.taskmgmt.dtos.UpdateUserRequest
+import dev.fresult.taskmgmt.dtos.UserPasswordRequest
 import dev.fresult.taskmgmt.dtos.UserResponse
-import jakarta.validation.constraints.Email
-import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Size
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.LastModifiedDate
@@ -17,12 +15,12 @@ import java.time.Instant
 data class User(
   @Id override val id: Long? = null,
 
-  val email: String,
+  val email: String? = null,
 
   // TODO: Hash Password
   val password: String? = null,
-  val firstName: String,
-  val lastName: String,
+  val firstName: String? = null,
+  val lastName: String? = null,
 
   @CreatedDate
   override val createdAt: Instant? = null,
@@ -47,13 +45,17 @@ data class User(
       firstName = body.firstName,
       lastName = body.lastName,
     )
+
+    fun fromChangePasswordRequest(body: UserPasswordRequest): User = User(
+      password = body.password
+    )
   }
 
   fun toUserResponse(): UserResponse = UserResponse(
     id = id!!,
-    email = email,
-    firstName = firstName,
-    lastName = lastName,
+    email = email.orEmpty(),
+    firstName = firstName.orEmpty(),
+    lastName = lastName.orEmpty(),
     createdAt = createdAt!!,
     updatedAt = updatedAt!!,
   )

@@ -8,14 +8,14 @@ Set environment `base-url` = `http://«hostname»:«port»` (e.g. `http://localh
   - [Get All Users](#get-all-users)
   - [Get User by ID](#get-user-by-id)
   - [Update User](#update-user)
-  - [Change Password](#change-password) (Not Available yet)
+  - [Change Password](#change-password)
   - [Delete User](#delete-user)
 - [Task](#tasks)
   - [Create Task](#create-task)
   - [Get All Tasks (with query params)](#get-all-tasks)
   - [Get Task By ID](#get-task-by-id)
   - [Update Task](#update-task)
-  - [Update Task Status](#update-task-status) (Not Available yet)
+  - [Update Task Status](#update-task-status)
   - [Delete Task](#delete-task)
 
 ## Users
@@ -141,7 +141,7 @@ null
 null
 ```
 
-### Change Password (Not Available yet)
+### Change Password
 #### Description
 **Method:** PATCH\
 **Route:** `/users/:id/password` (e.g. `/users/1/password`)
@@ -150,14 +150,14 @@ null
 **password:** String
 ```json
 {
-  "password": "NewPassword"
+  "password": "NewPa55w0rd"
 }
 ```
 
 #### Response Body
 **Success Case:** 200 OK
 ```json
-"Change Password Successfully"
+"Changed Password Successfully"
 ```
 
 **Fail Case:**\

@@ -16,6 +16,7 @@ class UserRouter(private val handler: UserHandler) {
       GET("/{id}", handler::byId)
       POST("", handler::create)
       PUT("/{id}", handler::update)
+      PATCH("/{id}", handler::changePassword)
       DELETE("/{id}", handler::deleteById)
     }
   }

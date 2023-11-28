@@ -54,28 +54,28 @@ class TaskHandler(
   suspend fun byId(request: ServerRequest): ServerResponse {
     val id = getPathId(request)
 
-    return service.byId(id).flatMap {
-      ServerResponse.ok().bodyValue(it.toTaskResponse())
-    }.switchIfEmpty { taskRespNotFound(id) }.awaitSingle()
+    return service.byId(id)
+      .flatMap { ServerResponse.ok().bodyValue(it.toTaskResponse()) }
+      .switchIfEmpty { taskRespNotFound(id) }.awaitSingle()
   }
 
   suspend fun create(request: ServerRequest): ServerResponse {
     return request.bodyToMono<TaskRequest>()
       .flatMap(::doCreate).awaitSingle()
-        // .flatMap { body ->
-        //   val violations = validator.validate(body)
-        //
-        //   if (violations.isEmpty()) {
-        //     userService.byId(body.userId).map(User::toUserResponse).flatMap { _ ->
-        //       val taskToCreate = Task.fromTaskRequest(body)
-        //       val createdTask = service.create(taskToCreate)
-        //       ServerResponse.status(HttpStatus.CREATED).body(createdTask.map(Task::toTaskResponse))
-        //     }.switchIfEmpty(userIdDoesNotExists(body.userId))
-        //   } else {
-        //     val errorResponse = BadRequestResponse(entryMapErrors(violations))
-        //     ServerResponse.badRequest().bodyValue(errorResponse)
-        //   }
-        // }.awaitSingle()
+    // .flatMap { body ->
+    //   val violations = validator.validate(body)
+    //
+    //   if (violations.isEmpty()) {
+    //     userService.byId(body.userId).map(User::toUserResponse).flatMap { _ ->
+    //       val taskToCreate = Task.fromTaskRequest(body)
+    //       val createdTask = service.create(taskToCreate)
+    //       ServerResponse.status(HttpStatus.CREATED).body(createdTask.map(Task::toTaskResponse))
+    //     }.switchIfEmpty(userIdDoesNotExists(body.userId))
+    //   } else {
+    //     val badRequestResp = BadRequestResponse(entryMapErrors(violations))
+    //     ServerResponse.badRequest().bodyValue(badRequestResp)
+    //   }
+    // }.awaitSingle()
   }
 
   private fun bodyToTask(body: TaskRequest) = Task.fromTaskRequest(body)
@@ -86,8 +86,8 @@ class TaskHandler(
       val createTaskResponse = ::bodyToTask then ::createTaskAndMapResp
       ServerResponse.status(HttpStatus.CREATED).body(createTaskResponse(body))
     } else {
-      val errorResponse = BadRequestResponse(entryMapErrors(violations))
-      ServerResponse.badRequest().bodyValue(errorResponse)
+      val badRequestResp = BadRequestResponse(entryMapErrors(violations))
+      ServerResponse.badRequest().bodyValue(badRequestResp)
     }
   }
 
@@ -101,13 +101,15 @@ class TaskHandler(
         val violations = validator.validate(body)
 
         if (violations.isEmpty()) {
-          userService.byId(body.userId).flatMap {
-            val taskFromBody = Task.fromTaskRequest(body)
-            val taskToUpdate = service.copyToUpdate(existingTask)(taskFromBody)
-            ServerResponse.ok().body(service.update(id)(taskToUpdate).map(Task::toTaskResponse))
-          }.switchIfEmpty(userIdDoesNotExists(body.userId))
+          userService.byId(body.userId)
+            .flatMap { _ ->
+              val taskFromBody = Task.fromTaskRequest(body)
+              val taskToUpdate = service.copyToUpdate(existingTask)(taskFromBody)
+              ServerResponse.ok().body(service.update(id)(taskToUpdate).map(Task::toTaskResponse))
+            }
+            .switchIfEmpty(userIdDoesNotExists(body.userId))
         } else {
-//          val errorResponse = entryMapErrors(violations).toMono().map { BadRequestResponse(it) }
+//          val badRequestResp = entryMapErrors(violations).toMono().map { BadRequestResponse(it) }
           val errorResponse = BadRequestResponse(entryMapErrors(violations))
           ServerResponse.badRequest().bodyValue(errorResponse)
         }
@@ -132,8 +134,8 @@ class TaskHandler(
           ServerResponse.ok().body(taskResponse)
         }.switchIfEmpty { taskRespNotFound(id) }
       } else {
-        val errorResponse = BadRequestResponse(entryMapErrors(violations))
-        ServerResponse.badRequest().bodyValue(errorResponse)
+        val badRequestResp = BadRequestResponse(entryMapErrors(violations))
+        ServerResponse.badRequest().bodyValue(badRequestResp)
       }
     }.awaitSingle()
   }
@@ -152,9 +154,9 @@ class TaskHandler(
 
   private fun userIdDoesNotExists(userId: Long): () -> Mono<ServerResponse> = {
     val errorMessage = "User with ID [${userId}] does not exist"
+    // val badRequestResp = BadRequestResponse(mapOf(Pair("userId", errorMessage)))
+    val badRequestResp = BadRequestResponse(mapOf("userId" to errorMessage))
     println(errorMessage)
-    // val errorResponse = BadRequestResponse(mapOf(Pair("userId", errorMessage)))
-    val errorResponse = BadRequestResponse(mapOf("userId" to errorMessage))
-    ServerResponse.badRequest().bodyValue(errorResponse)
+    ServerResponse.badRequest().bodyValue(badRequestResp)
   }
 }
