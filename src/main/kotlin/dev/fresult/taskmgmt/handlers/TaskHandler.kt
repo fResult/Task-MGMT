@@ -46,11 +46,11 @@ class TaskHandler(
       updatedByUsers = getIdsFromQueryParams("updated-by"),
     )
 
-    val fetchedTask =
+    val fetchedTasks =
       if (queryParams.isEmpty()) service.all()
       else service.allByQueryParams(taskQueryParams)
 
-    return ServerResponse.ok().bodyAndAwait(fetchedTask.map(Task::toTaskResponse).asFlow())
+    return ServerResponse.ok().bodyAndAwait(fetchedTasks.map(Task::toTaskResponse).asFlow())
   }
 
   suspend fun byId(request: ServerRequest): ServerResponse {
