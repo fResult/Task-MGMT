@@ -98,12 +98,13 @@ class UserHandler(private val service: UserService, private val validator: Valid
   private fun doChangePassword(id: Long): (UserPasswordRequest) -> Mono<ServerResponse> = { body ->
     val violations = validator.validate(body)
     if (violations.isEmpty()) {
-      service.byId(id).flatMap { _ ->
-        val userFromBody = User.fromChangePasswordRequest(body)
-        service.changePassword(id)(userFromBody)
-      }.flatMap {
-        ServerResponse.ok().bodyValue("Changed Password Successfully")
-      }.switchIfEmpty(userResponseNotFound(id))
+      fun bodyToUser(body: UserPasswordRequest) = User.fromChangePasswordRequest(body)
+      fun updateUser(id: Long) = { user: User -> service.changePassword(id)(user) }
+
+      val changePasswordResp = ::bodyToUser then updateUser(id)
+      changePasswordResp(body)
+        .flatMap { ServerResponse.ok().bodyValue("Changed Password Successfully") }
+        .switchIfEmpty(userResponseNotFound(id))
     } else {
       val badRequestResp = BadRequestResponse(entryMapErrors(violations))
       ServerResponse.badRequest().bodyValue(badRequestResp)
