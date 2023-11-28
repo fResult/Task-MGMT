@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.*
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.switchIfEmpty
+import reactor.kotlin.core.publisher.toMono
 
 @Component
 class UserHandler(private val service: UserService, private val validator: Validator) {
@@ -90,7 +91,7 @@ class UserHandler(private val service: UserService, private val validator: Valid
 
       val updateUserResponse = ::bodyToUser then updateUserAndMapResp(id)
       updateUserResponse(body)
-        .flatMap { ServerResponse.ok().bodyValue(it) }
+        .flatMap(ServerResponse.ok()::bodyValue)
         .switchIfEmpty { userResponseNotFound(id) }
     } else {
       val badRequestResp = BadRequestResponse(entryMapErrors(violations))

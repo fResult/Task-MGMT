@@ -80,19 +80,6 @@ class TaskHandler(
     // }.awaitSingle()
   }
 
-  private fun bodyToTask(body: TaskRequest) = Task.fromTaskRequest(body)
-  private fun createTaskAndMapResp(task: Task) = service.create(task).map(Task::toTaskResponse)
-  private fun doCreate(body: TaskRequest): Mono<ServerResponse> {
-    val violations = validator.validate(body)
-    return if (violations.isEmpty()) {
-      val createTaskResponse = ::bodyToTask then ::createTaskAndMapResp
-      ServerResponse.status(HttpStatus.CREATED).body(createTaskResponse(body))
-    } else {
-      val badRequestResp = BadRequestResponse(entryMapErrors(violations))
-      ServerResponse.badRequest().bodyValue(badRequestResp)
-    }
-  }
-
   suspend fun update(request: ServerRequest): ServerResponse {
     val id = getPathId(request)
 
@@ -152,6 +139,19 @@ class TaskHandler(
       log.info("Task with ID {} does not exist", id)
       noContentResponse
     }.awaitSingle()
+  }
+
+  private fun bodyToTask(body: TaskRequest) = Task.fromTaskRequest(body)
+  private fun createTaskAndMapResp(task: Task) = service.create(task).map(Task::toTaskResponse)
+  private fun doCreate(body: TaskRequest): Mono<ServerResponse> {
+    val violations = validator.validate(body)
+    return if (violations.isEmpty()) {
+      val createTaskResponse = ::bodyToTask then ::createTaskAndMapResp
+      ServerResponse.status(HttpStatus.CREATED).body(createTaskResponse(body))
+    } else {
+      val badRequestResp = BadRequestResponse(entryMapErrors(violations))
+      ServerResponse.badRequest().bodyValue(badRequestResp)
+    }
   }
 
   private fun userIdDoesNotExists(userId: Long): () -> Mono<ServerResponse> = {
