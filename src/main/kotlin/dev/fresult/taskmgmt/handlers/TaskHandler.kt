@@ -99,8 +99,8 @@ class TaskHandler(
             .switchIfEmpty(userIdDoesNotExists(body.userId))
         } else {
 //          val badRequestResp = entryMapErrors(violations).toMono().map { BadRequestResponse(it) }
-          val errorResponse = BadRequestResponse(entryMapErrors(violations))
-          ServerResponse.badRequest().bodyValue(errorResponse)
+          val badRequestResp = BadRequestResponse(entryMapErrors(violations))
+          ServerResponse.badRequest().bodyValue(badRequestResp)
         }
       }
 

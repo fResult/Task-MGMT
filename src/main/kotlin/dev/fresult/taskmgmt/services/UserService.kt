@@ -3,7 +3,6 @@ package dev.fresult.taskmgmt.services
 import dev.fresult.taskmgmt.entities.User
 import dev.fresult.taskmgmt.repositories.UserRepository
 import org.apache.logging.log4j.LogManager
-import org.apache.logging.log4j.Logger
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -16,7 +15,7 @@ class UserService(private val repository: UserRepository) : BaseService<User, Lo
 
   override fun byId(id: Long): Mono<User> = repository.findById(id)
 
-  override fun create(user: User): Mono<User> = repository.save(user)
+  override fun create(item: User): Mono<User> = repository.save(item)
 
   override fun update(id: Long): (User) -> Mono<User> = { user ->
     byId(id).flatMap { existingUser ->

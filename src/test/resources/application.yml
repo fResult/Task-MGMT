@@ -1,0 +1,11 @@
+spring:
+  r2dbc:
+#    url: r2dbc:postgresql://localhost:5432/task-mgmt
+    url: r2dbc:postgresql://localhost///task-mgmt?TC_IMAGE_TAG=13.3
+    username: postgres
+    password: 123456
+
+  sql:
+    init:
+      schema-locations: classpath:schemas.sql
+      mode: ALWAYS
