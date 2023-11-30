@@ -19,8 +19,8 @@ class TaskService(private val repository: TaskRepository) : BaseService<Task, Lo
 
   override fun byId(id: Long): Mono<Task> = repository.findById(id)
 
-  override fun create(task: Task): Mono<Task> {
-    return repository.save(task)
+  override fun create(item: Task): Mono<Task> {
+    return repository.save(item)
   }
 
   override fun update(id: Long) = { task: Task ->
