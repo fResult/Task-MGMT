@@ -11,21 +11,14 @@ import dev.fresult.taskmgmt.utils.responses.responseNotFound
 import dev.fresult.taskmgmt.utils.then
 import dev.fresult.taskmgmt.utils.validations.entryMapErrors
 import jakarta.validation.Validator
-import kotlinx.coroutines.flow.flatMap
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.reactive.asFlow
-import kotlinx.coroutines.reactive.awaitSingle
-import kotlinx.coroutines.reactor.asFlux
 import kotlinx.coroutines.reactor.awaitSingle
 import org.apache.logging.log4j.LogManager
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.*
-import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.switchIfEmpty
-import reactor.kotlin.core.publisher.toMono
-import java.util.concurrent.Flow
 
 @Component
 class UserHandler(private val service: UserService, private val validator: Validator) {
