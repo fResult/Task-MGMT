@@ -1,4 +1,8 @@
 spring:
+  threads:
+    virtual:
+      enabled: true
+
   r2dbc:
     url: r2dbc:postgresql://localhost:5432/task-mgmt
     username: postgres

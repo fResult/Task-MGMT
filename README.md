@@ -9,7 +9,7 @@
 ## API Documentation
 See [API_DOC.md](/apidoc/API_DOC.md) and [Task MGMT API | Postman](/apidoc/api-doc.json)
 > **Note:**\
-> Import _Task MGMT API_ on Postman\
+> Import _Task MGMT API Collection_ on Postman\
 > and setup environment variable `base-url` = `http://«hostname»/«port»` (e.g. `http://localhost:8080`)
 
 ## Scripts
