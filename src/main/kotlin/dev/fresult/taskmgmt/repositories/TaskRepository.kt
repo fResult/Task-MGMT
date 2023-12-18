@@ -9,15 +9,6 @@ import reactor.core.publisher.Flux
 import java.time.LocalDate
 
 interface TaskRepository : R2dbcRepository<Task, Long> {
-  //  @Query(
-//    """
-//    SELECT * FROM tasks
-//    WHERE (COALESCE(:#{#createdBy[0]}, NULL) IS NULL OR created_by IN (:createdBy))
-//      AND (COALESCE(:#{#updatedBy[0]}, NULL) IS NULL OR updated_by IN (:updatedBy))
-//      AND (COALESCE(:#{#dueDates[0]}, NULL) IS NULL OR due_date IN (:dueDates))
-//      AND (COALESCE(:#{#statuses[0]}, NULL) IS NULL OR status IN (:statuses))
-//    """
-//  )
   @Query(
     """
     SELECT * FROM tasks
