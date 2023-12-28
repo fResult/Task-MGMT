@@ -33,6 +33,5 @@ services:
 #        "spring.jpa.hibernate.ddl-auto" : "update"
 #      }'
 
-
 volumes:
   taskmgmt-dev:

@@ -13,6 +13,10 @@ spring:
     init:
       schema-locations: classpath:schemas.sql
       mode: ALWAYS
+
+logging:
+  level:
+    org.springframework: DEBUG
 #  datasource:
 #    url: jdbc:postgresql://taskmgmt-db:5432
 #    name: task-mgmt
