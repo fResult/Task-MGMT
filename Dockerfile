@@ -35,7 +35,7 @@ COPY gradle /app/gradle
 COPY . /app
 
 # Build the application
-RUN gradle build --no-daemon
+RUN ./gradlew build --no-daemon
 
 # Expose the port on which the application will run
 EXPOSE 8088

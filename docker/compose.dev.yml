@@ -15,6 +15,8 @@ services:
       - "5432:5432"
     volumes:
       - taskmgmt-dev:/var/lib/postgresql/data
+    networks:
+      - taskmgmt-dev
 
 #  taskmgmt-app:
 #    depends_on:
@@ -24,6 +26,8 @@ services:
 #    env_file: /.env
 #    ports:
 #      - ${SPRING_LOCAL_PORT}:${SPRING_LOCAL_PORT}
+#    networks:
+#      - taskmgmt-dev
 #    environment:
 #      SPRING_APPLICATION_JSON: '{
 #        "spring.datasource.url": "jdbc:postgresql://postgresdb:$POSTGRES_DOCKER_PORT/$POSTGRES_DATABASE",
@@ -35,3 +39,7 @@ services:
 
 volumes:
   taskmgmt-dev:
+
+networks:
+  taskmgmt-dev:
+    name: taskmgmt-dev

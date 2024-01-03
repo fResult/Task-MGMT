@@ -4,9 +4,11 @@ spring:
       enabled: true
 
   r2dbc:
-    url: r2dbc:postgresql://localhost:5432/task-mgmt
-    username: postgres
-    password: 123456
+    url: ${POSTGRES_URL:r2dbc:postgresql://localhost:5432/task-mgmt}
+#    url: r2dbc:postgresql://taskmgmt-db:5432/task-mgmt
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:123456}
+#    initialization-mode: never
 #    schema: update
 
   sql:
@@ -14,9 +16,9 @@ spring:
       schema-locations: classpath:schemas.sql
       mode: ALWAYS
 
-logging:
-  level:
-    org.springframework: DEBUG
+#logging:
+#  level:
+#    org.springframework: DEBUG
 #  datasource:
 #    url: jdbc:postgresql://taskmgmt-db:5432
 #    name: task-mgmt
