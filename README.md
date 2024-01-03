@@ -1,6 +1,6 @@
 # Task Management
 ## Prerequisite
-1. Java Development Kit (JDK) version 17 or more (I preferred version 21)
+1. Java Development Kit (JDK) version 21 or more (I preferred version 21)
 2. Gradle 8 (or more)
 3. IntelliJ IDEA (or any preferred IDE)
 4. Kotlin Plugin: (for IntelliJ IDEA’s user)
@@ -10,7 +10,7 @@
 See [API_DOC.md](/apidoc/API_DOC.md) and [Task MGMT API | Postman](/apidoc/api-doc.json)
 > **Note:**\
 > Import _Task MGMT API Collection_ on Postman\
-> and setup environment variable `base-url` = `http://«hostname»/«port»` (e.g. `http://localhost:8080`)
+> and setup environment variable `base-url` = `http://«hostname»:«port»` (e.g. `http://localhost:8080`)
 
 ## Scripts
 **Prepare**
@@ -42,7 +42,7 @@ docker run -d --name «container_name» \
   -e POSTGRES_URL=r2dbc:postgresql://«postgres_container_name»:5432/«database_name» \
   -p «target_port»/8080 \
   «app_image_name»
-# Example
+# For example
 docker run -d --name app-task-mgmt \
   --network taskmgmt-dev \
   -e POSTGRES_URL=r2dbc:postgresql://taskmgmt-db:5432/task-mgmt \
