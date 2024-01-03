@@ -28,6 +28,27 @@ docker-compose -f docker/compose.dev.yml up --build -d
 ./gradlew bootRun
 ```
 
+**Create Docker Image**
+```shell
+docker build -t «tag_name» .
+# Example
+docker build -t app-task-mgmt .
+```
+
+**Create Docker Container**
+```shell
+docker run -d --name «container_name» --network «network_name» \
+  -e POSTGRES_URL=r2dbc:postgresql://«postgres_container_name»:5432/«database_name» \
+  -p «target_port»/8080 \
+  «app_image_name»
+# Example
+docker run -d --name app-task-mgmt \
+  --network taskmgmt-dev \
+  -e POSTGRES_URL=r2dbc:postgresql://taskmgmt-db:5432/task-mgmt \
+  -p 8088:8080 \
+  app-task-mgmt
+```
+
 **Data Table change**
 1. Change Table definition in the `/src/main/resources/schemas.sql` file to relate with the Entity data classes
 2. Access to the containerized database (Postgresql)
