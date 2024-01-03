@@ -35,9 +35,10 @@ docker build -t «tag_name» .
 docker build -t app-task-mgmt .
 ```
 
-**Create Docker Container**
+**Create Container by Docker Command**
 ```shell
-docker run -d --name «container_name» --network «network_name» \
+docker run -d --name «container_name» \
+  --network «network_name» \
   -e POSTGRES_URL=r2dbc:postgresql://«postgres_container_name»:5432/«database_name» \
   -p «target_port»/8080 \
   «app_image_name»
