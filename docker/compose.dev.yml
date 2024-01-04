@@ -3,29 +3,44 @@ services:
     container_name: taskmgmt-db
     image: postgres
     restart: unless-stopped
-    env_file: ../.env
+    env_file: .env
     environment:
-#      POSTGRES_USER: $POSTGRES_USER
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123456 # Should keep in the .env file
-      POSTGRES_DB: task-mgmt
+      #      POSTGRES_USER: postgres
+      POSTGRES_USER: $POSTGRES_USER
+#      POSTGRES_PASSWORD: 123456
+      POSTGRES_PASSWORD: $POSTGRES_ROOT_PASSWORD
+#      POSTGRES_DB: ${task-mgmt}
+      POSTGRES_DB: $POSTGRES_DATABASE
     ports:
       - "5432:5432"
+#      - ${POSTGRES_DOCKER_PORT}:${POSTGRES_DOCKER_PORT}
     volumes:
       - taskmgmt-dev:/var/lib/postgresql/data
+#      - taskmgmt-config:/etc
     networks:
       - taskmgmt-dev
 
-#  taskmgmt-app:
-#    depends_on:
-#     - taskmgmt-db
-#    build: ../task-mgmt
-#    restart: on-failure
-#    env_file: /.env
-#    ports:
-#      - ${SPRING_LOCAL_PORT}:${SPRING_LOCAL_PORT}
+  taskmgmt-app:
+    container_name: taskmgmt-app
+    env_file: .env
+    depends_on:
+     - taskmgmt-db
+    build:
+      context: ..
+      target: development
+    restart: on-failure
+    ports:
+      - $SPRING_LOCAL_PORT:$SPRING_DOCKER_PORT
+      - '8000:8000'
 #    networks:
 #      - taskmgmt-dev
+    environment:
+#      - SERVER_PORT=8080
+      - SERVER_PORT=8081
+      - POSTGRES_URL=r2dbc:postgresql://taskmgmt-dev:5432/task-mgmt
+    volumes:
+      - ./:/app
+
 #    environment:
 #      SPRING_APPLICATION_JSON: '{
 #        "spring.datasource.url": "jdbc:postgresql://postgresdb:$POSTGRES_DOCKER_PORT/$POSTGRES_DATABASE",
