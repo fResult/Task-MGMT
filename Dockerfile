@@ -1,44 +1,44 @@
-# In the root directory, run `docker build --tag app-task-mgmt .`
+# In the root directory, run `docker build --tag app-task-mgmt .
 
-# FROM gradle:8-jdk21 AS build
-# COPY --chown=gradle:gradle . /home/gradle/src
-# WORKDIR /home/gradle/src
-# RUN gradle build --no-daemon
-
-# FROM eclipse-temurin:21-jammy
-
-# WORKDIR /app
-# EXPOSE 8088
-# COPY --from=build /home/gradle/src/build/libs/task-mgmt-0.0.1.jar /app/
-# RUN bash -c 'touch /app/task-mgmt-0.0.1.jar'
-# ENTRYPOINT ["java", "-jar", "/app/task-mgmt-0.0.1.jar"]
-#ENTRYPOINT [
-#  "java",
-#  "-XX:+UnlockExperimentalVMOptions",
-#  "-XX:+UseCGroupMemoryLimitForHeap",
-#  "-Djava.security.egd=file:/dev/./urandom",
-#  "-jar",
-#  "/app/task-mgmt-0.0.1.jar"
-#]
-
-#####
-
-FROM eclipse-temurin:21-jammy
+FROM eclipse-temurin:21-jammy AS base
 # Set the working directory inside the container
 WORKDIR /app
 
 # Copy only the necessary Gradle files to leverage caching
-COPY build.gradle.kts settings.gradle.kts gradlew /app/
+#COPY build.gradle.kts ./settings.gradle.kts ./gradlew /app/
+COPY build.gradle.kts ./settings.gradle.kts ./gradlew /app/
 COPY gradle /app/gradle
 
+# Copy the Gradle Wrapper files
+COPY gradlew /app/
+COPY gradlew.bat /app/
+
 # Copy the entire project (except files listed in .dockerignore)
+#COPY .. /app
 COPY . /app
 
 # Build the application
 RUN ./gradlew build --no-daemon
 
 # Expose the port on which the application will run
-EXPOSE 8088
+EXPOSE 8088:8080
 
 # Run the application
-CMD ["java", "-jar", "build/libs/task-mgmt-0.0.1.jar"]
+FROM base AS development
+#CMD ["java", "-jar", "build/libs/task-mgmt-0.0.1.jar"]
+CMD ["./gradlew", "bootRun", "-Dspring-boot.run.jvmArguments='-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8000'"]
+
+
+#CMD [
+#  "./gradlew", "bootRun", "-Dspring-boot.run.profiles=mysql", "-Dspring-boot.run.jvmArguments='-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8000'"
+#]
+
+FROM base AS build
+RUN ./gradlew build
+
+FROM eclipse-temurin:21-jammy AS production
+EXPOSE 8080:8080
+#COPY --from=build /app/target/task-mgmt-*.jar /task-mgmt.jar
+COPY --from=build /app/build/libs/task-mgmt-*.jar /task-mgmt.jar
+#CMD ["java", "-jar", "build/libs/task-mgmt.jar"]
+CMD ["java", "-jar", "/task-mgmt.jar"]
