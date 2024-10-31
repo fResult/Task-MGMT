@@ -43,7 +43,7 @@ Set environment `base-url` = `http://«hostname»:«port»` (e.g. `http://localh
 ```json
 {
   "id": 1,
-  "email": "example2@domain.com",
+  "email": "john.d@example.com",
   "firstName": "John",
   "lastName": "Doe",
   "createdAt": "2023-11-25T12:07:02.401157Z",
