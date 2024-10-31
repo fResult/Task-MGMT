@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   taskmgmt-db:
     container_name: taskmgmt-db
@@ -9,7 +7,7 @@ services:
     environment:
 #      POSTGRES_USER: $POSTGRES_USER
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123456
+      POSTGRES_PASSWORD: 123456 # Should keep in the .env file
       POSTGRES_DB: task-mgmt
     ports:
       - "5432:5432"
