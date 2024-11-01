@@ -9,19 +9,27 @@
 ## API Documentation
 See [API_DOC.md](/apidoc/API_DOC.md) and [Task MGMT API | Postman](/apidoc/api-doc.json)
 > **Note:**\
-> Import _Task MGMT API Collection_ on Postman\
+> Import *Task MGMT API Collection* on Postman\
 > and setup environment variable `base-url` = `http://«hostname»:«port»` (e.g. `http://localhost:8080`)
 
-## Scripts
+## Available Scripts
 **Prepare**
+
+To build containerized database:
+
 ```shell
 docker-compose -f docker/compose.dev.yml up --build -d
 ```
 
 **Build**
+
+To install packages:
+
 ```shell
 ./gradlew clean build
 ```
+
+To run application on local machine:
 
 **Run**
 ```shell
@@ -72,7 +80,7 @@ docker run -d --name app-task-mgmt \
     # Data table will be re-created follow the `schemas.sql` file
     ```
 
-## TODO
+## TODO (for improvement)
 - [x] Validate body request to response 400 Bad Request
 - [x] Create DTO for Tasks by UserId
 - [x] Create GET `/tasks` API route to retrieve tasks that match specific due dates, statuses, or created/updated users.
