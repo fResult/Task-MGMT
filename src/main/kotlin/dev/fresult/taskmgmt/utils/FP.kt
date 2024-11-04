@@ -22,3 +22,8 @@ infix fun <A1, A2, R> ((A1) -> A2).then(g: (A2) -> R): (A1) -> R = { x ->
   val f = this
   g(f(x))
 }
+
+infix fun <A1, A2, R> ((A2) -> R).after(f: (A1) -> A2): (A1) -> R = { x ->
+  val g = this
+  g(f(x))
+}
